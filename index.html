@@ -332,12 +332,12 @@
     <script src="https://alcdn.msauth.net/browser/2.24.0/js/msal-browser.min.js"></script>
     
     <script>
-        // Configuração Microsoft Entra ID - Versão corrigida
+        
         const msalConfig = {
             auth: {
-                clientId: "9b518380-2b14-46d7-8a5a-e5a815b48aac",
+                clientId: "9b518380-2b14-46d7-8a5a-e5a815b48aac", 
                 authority: "https://login.microsoftonline.com/common",
-                redirectUri: window.location.origin,
+                redirectUri: "https://wandersont-silva.github.io/sistema-agendamento-nap/", // URL ABSOLUTA
                 knownAuthorities: ["login.microsoftonline.com"]
             },
             cache: {
@@ -418,8 +418,9 @@
                 localStorage.setItem('currentUser', JSON.stringify(userData));
                 this.showMessage(`Bem-vindo(a), ${userData.name || 'Usuário'}!`, 'success');
                 
+                // URL ABSOLUTA
                 setTimeout(() => {
-                    window.location.href = 'dashboard.html';
+                    window.location.href = 'https://wandersont-silva.github.io/sistema-agendamento-nap/dashboard.html';
                 }, 2000);
             }
 
@@ -479,10 +480,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
