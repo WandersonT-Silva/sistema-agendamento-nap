@@ -331,152 +331,161 @@
     <!-- MSAL Biblioteca -->
     <script src="https://alcdn.msauth.net/browser/2.24.0/js/msal-browser.min.js"></script>
     
-    <script>
-        
-        const msalConfig = {
-            auth: {
-                clientId: "9b518380-2b14-46d7-8a5a-e5a815b48aac", 
-                authority: "https://login.microsoftonline.com/common",
-                redirectUri: "https://wandersont-silva.github.io/sistema-agendamento-nap/", // URL ABSOLUTA
-                knownAuthorities: ["login.microsoftonline.com"]
-            },
-            cache: {
-                cacheLocation: "localStorage",
-                storeAuthStateInCookie: false
-            }
-        };
+   <script>
+    // Configuração Microsoft Entra ID
+    const msalConfig = {
+        auth: {
+            clientId: "9b518380-2b14-46d7-8a5a-e5a815b48aac",
+            authority: "https://login.microsoftonline.com/common",
+            redirectUri: "https://wandersont-silva.github.io/sistema-agendamento-nap/",
+            knownAuthorities: ["login.microsoftonline.com"]
+        },
+        cache: {
+            cacheLocation: "localStorage",
+            storeAuthStateInCookie: false
+        }
+    };
 
-        const msalInstance = new msal.PublicClientApplication(msalConfig);
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-        const loginRequest = {
-            scopes: ["User.Read"],
-            prompt: "select_account"
-        };
+    const loginRequest = {
+        scopes: ["User.Read"],
+        prompt: "select_account"
+    };
 
-        class AuthManager {
-            constructor() {
-                this.msalInstance = msalInstance;
-                this.init();
-            }
+    class AuthManager {
+        constructor() {
+            this.msalInstance = msalInstance;
+            this.init();
+        }
 
-            async init() {
-                try {
-                    await this.msalInstance.initialize();
-                    
-                    // Verificar redirecionamento
-                    const response = await this.msalInstance.handleRedirectPromise();
-                    if (response) {
-                        this.handleLoginSuccess(response.account);
-                        return;
-                    }
-                    
-                    // Verificar se já está autenticado
-                    const accounts = this.msalInstance.getAllAccounts();
-                    if (accounts.length > 0) {
-                        this.showMessage('Reconectando...', 'success');
-                        this.handleLoginSuccess(accounts[0]);
-                    }
-                } catch (error) {
-                    console.error('Erro ao inicializar:', error);
-                    this.showMessage('Sistema pronto para login', 'info');
-                }
-            }
-
-            async loginWithMicrosoft() {
-                try {
-                    this.setLoading(true);
-                    this.showMessage('Conectando...', 'info');
-                    
-                    await this.msalInstance.loginRedirect(loginRequest);
-                    
-                } catch (error) {
-                    console.error('Erro no login:', error);
-                    this.handleLoginError(error);
-                    this.setLoading(false);
-                }
-            }
-
-            handleLoginSuccess(account) {
-                console.log('Login bem-sucedido:', account);
+        async init() {
+            try {
+                await this.msalInstance.initialize();
                 
-                // Verificar domínio do email
-                if (account.username && !account.username.endsWith('@santoantonio.edu.br')) {
-                    this.showMessage('Acesso permitido apenas para emails @santoantonio.edu.br', 'error');
-                    this.msalInstance.logoutRedirect();
+                // ✅ VERIFICAÇÃO CORRIGIDA DO REDIRECT
+                console.log('Verificando redirect promise...');
+                const response = await this.msalInstance.handleRedirectPromise();
+                
+                if (response) {
+                    console.log('Redirect detectado!', response);
+                    this.handleLoginSuccess(response.account);
                     return;
                 }
-
-                // Salvar informações do usuário
-                const userData = {
-                    email: account.username,
-                    name: account.name,
-                    id: account.homeAccountId,
-                    tenantId: account.tenantId,
-                    loginTime: new Date().toISOString()
-                };
-
-                localStorage.setItem('currentUser', JSON.stringify(userData));
-                this.showMessage(`Bem-vindo(a), ${userData.name || 'Usuário'}!`, 'success');
                 
-                // URL ABSOLUTA
-                setTimeout(() => {
-                    window.location.href = 'https://wandersont-silva.github.io/sistema-agendamento-nap/dashboard.html';
-                }, 2000);
-            }
-
-            handleLoginError(error) {
-                let errorMessage = 'Erro ao conectar. ';
+                // Verificar se já está autenticado
+                console.log('Verificando contas existentes...');
+                const accounts = this.msalInstance.getAllAccounts();
+                console.log('Contas encontradas:', accounts);
                 
-                if (error.errorCode === 'AADSTS700016') {
-                    errorMessage += 'Aplicativo não configurado. Contate o administrador.';
-                } else if (error.errorCode === 'AADSTS50020') {
-                    errorMessage += 'Usuário não encontrado no tenant.';
-                } else if (error.errorCode === 'user_cancelled') {
-                    errorMessage = 'Login cancelado.';
+                if (accounts.length > 0) {
+                    this.showMessage('Reconectando...', 'success');
+                    this.handleLoginSuccess(accounts[0]);
                 } else {
-                    errorMessage += error.message || 'Tente novamente.';
+                    this.showMessage('Sistema pronto para login', 'info');
                 }
                 
-                this.showMessage(errorMessage, 'error');
+            } catch (error) {
+                console.error('Erro ao inicializar:', error);
+                this.showMessage('Sistema pronto para login', 'info');
             }
+        }
 
-            showMessage(text, type) {
-                const messageEl = document.getElementById('message');
-                messageEl.textContent = text;
-                messageEl.className = `message ${type}`;
-            }
-
-            setLoading(loading) {
-                const btnText = document.getElementById('btnText');
-                const btnLoader = document.getElementById('btnLoader');
-                const microsoftBtn = document.getElementById('microsoftLogin');
+        async loginWithMicrosoft() {
+            try {
+                this.setLoading(true);
+                this.showMessage('Conectando...', 'info');
                 
-                if (loading) {
-                    btnText.textContent = 'Redirecionando...';
-                    btnLoader.style.display = 'block';
-                    microsoftBtn.disabled = true;
-                } else {
-                    btnText.textContent = 'Entrar com Microsoft';
-                    btnLoader.style.display = 'none';
-                    microsoftBtn.disabled = false;
+                // ✅ TENTE PRIMEIRO COM POPUP (mais confiável)
+                const loginResponse = await this.msalInstance.loginPopup(loginRequest);
+                this.handleLoginSuccess(loginResponse.account);
+                
+            } catch (error) {
+                console.error('Erro no login popup:', error);
+                
+                // ✅ SE POPUP FALHAR, TENTE REDIRECT
+                try {
+                    await this.msalInstance.loginRedirect(loginRequest);
+                } catch (redirectError) {
+                    console.error('Erro no login redirect:', redirectError);
+                    this.handleLoginError(redirectError);
+                    this.setLoading(false);
                 }
             }
         }
 
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', function() {
-            const authManager = new AuthManager();
+        handleLoginSuccess(account) {
+            console.log('Login bem-sucedido:', account);
             
-            document.getElementById('microsoftLogin').addEventListener('click', function() {
-                authManager.loginWithMicrosoft();
-            });
-
-            // Verificar se há tentativa de acesso não autorizado
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('error') === 'access_denied') {
-                authManager.showMessage('Acesso não autorizado. Use seu email institucional.', 'error');
+            // Verificar domínio do email
+            if (account.username && !account.username.endsWith('@santoantonio.edu.br')) {
+                this.showMessage('Acesso permitido apenas para emails @santoantonio.edu.br', 'error');
+                this.msalInstance.logoutPopup();
+                return;
             }
+
+            // Salvar informações do usuário
+            const userData = {
+                email: account.username,
+                name: account.name,
+                id: account.homeAccountId,
+                tenantId: account.tenantId,
+                loginTime: new Date().toISOString()
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            this.showMessage(`Bem-vindo(a), ${userData.name || 'Usuário'}! Redirecionando...`, 'success');
+            
+            // Redirecionamento absoluto
+            setTimeout(() => {
+                window.location.href = 'https://wandersont-silva.github.io/sistema-agendamento-nap/dashboard.html';
+            }, 2000);
+        }
+
+        handleLoginError(error) {
+            let errorMessage = 'Erro ao conectar. ';
+            
+            if (error.errorCode === 'user_cancelled') {
+                errorMessage = 'Login cancelado.';
+            } else if (error.message) {
+                errorMessage += error.message;
+            }
+            
+            this.showMessage(errorMessage, 'error');
+        }
+
+        showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+        }
+
+        setLoading(loading) {
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const microsoftBtn = document.getElementById('microsoftLogin');
+            
+            if (loading) {
+                btnText.textContent = 'Conectando...';
+                btnLoader.style.display = 'block';
+                microsoftBtn.disabled = true;
+            } else {
+                btnText.textContent = 'Entrar com Microsoft';
+                btnLoader.style.display = 'none';
+                microsoftBtn.disabled = false;
+            }
+        }
+    }
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+        const authManager = new AuthManager();
+        
+        document.getElementById('microsoftLogin').addEventListener('click', function() {
+            authManager.loginWithMicrosoft();
         });
-    </script>
+    });
+</script>
 </body>
 </html>
+
