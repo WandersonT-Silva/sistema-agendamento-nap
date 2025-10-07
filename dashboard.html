@@ -440,7 +440,10 @@
         </div>
     </div>
 
-    <script>
+        <script>
+        // URLS ABSOLUTAS
+        const BASE_URL = 'https://wandersont-silva.github.io/sistema-agendamento-nap';
+
         // Gerenciamento do estado da aplicação
         class DashboardManager {
             constructor() {
@@ -456,7 +459,8 @@
             checkAuthentication() {
                 const currentUser = localStorage.getItem('currentUser');
                 if (!currentUser) {
-                    window.location.href = 'index.html';
+                    // REDIRECIONAMENTO ABSOLUTO
+                    window.location.href = BASE_URL + '/index.html';
                     return;
                 }
                 
@@ -490,21 +494,21 @@
                 
                 this.currentMenu = menuId;
                 
-                // Navegação entre telas
+                // NAVEGAÇÃO COM URLS ABSOLUTAS
                 switch(menuId) {
                     case 1: // Dashboard (já estamos aqui)
                         break;
                     case 2: // Agendamento
-                        window.location.href = 'agendamento.html';
+                        window.location.href = BASE_URL + '/agendamento.html';
                         break;
                     case 3: // Suporte
-                        window.location.href = 'suporte.html';
+                        window.location.href = BASE_URL + '/suporte.html';
                         break;
                     case 4: // Calendário
-                        window.location.href = 'calendario.html';
+                        window.location.href = BASE_URL + '/calendario.html';
                         break;
                     case 5: // Busca
-                        window.location.href = 'busca.html';
+                        window.location.href = BASE_URL + '/busca.html';
                         break;
                 }
             }
@@ -517,3 +521,4 @@
     </script>
 </body>
 </html>
+
