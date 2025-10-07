@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário - Sistema NAP</title>
+    <style>
+        /* ===== TEMA ESCOLA - SANTO ANTÔNIO ===== */
+        :root {
+            /* Cores oficiais da escola */
+            --dourado: #D4AF37;         /* Dourado clássico */
+            --laranja: #FF6B35;         /* Laranja vibrante */
+            --azul-marinho: #1E3A8A;    /* Azul marinho */
+            --branco: #FFFFFF;          /* Branco */
+            --cinza-claro: #F8FAFC;     /* Cinza muito claro */
+            --cinza-medio: #6B7280;     /* Cinza médio */
+            --cinza-escuro: #1F2937;    /* Cinza escuro */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--cinza-claro) 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: var(--cinza-escuro);
+            overflow: hidden;
+        }
+
+        /* ===== CABEÇALHO SIMPLIFICADO ===== */
+        .header {
+            position: relative;
+            height: 80px;
+            background: var(--azul-marinho);
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+        }
+
+        .header-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--azul-marinho);
+            z-index: 1;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 30px;
+            height: 100%;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            height: 50px;
+            width: auto;
+            filter: brightness(0) invert(1);
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        /* ===== LAYOUT PRINCIPAL ===== */
+        .main-layout {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+
+        /* ===== MENU LATERAL SEM LOGO ===== */
+        .sidebar {
+            width: 90px;
+            background: var(--branco);
+            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-nav {
+            list-style: none;
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        .menu-item {
+            position: relative;
+            padding: 18px 0;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            margin: 5px 0;
+        }
+
+        .menu-item:hover {
+            background: var(--cinza-claro);
+            border-left-color: var(--laranja);
+        }
+
+        .menu-item.active {
+            background: var(--azul-marinho);
+            border-left-color: var(--dourado);
+        }
+
+        .menu-item.active .menu-icon {
+            color: var(--branco);
+            transform: scale(1.1);
+        }
+
+        .menu-item.active .menu-text {
+            color: var(--branco);
+            font-weight: 600;
+        }
+
+        .menu-icon {
+            font-size: 22px;
+            display: block;
+            margin-bottom: 6px;
+            color: var(--cinza-medio);
+            transition: all 0.3s ease;
+        }
+
+        .menu-text {
+            font-size: 11px;
+            color: var(--cinza-medio);
+            font-weight: 500;
+            line-height: 1.2;
+        }
+
+        .menu-tooltip {
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--azul-marinho);
+            color: var(--branco);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            margin-left: 15px;
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+            border: 1px solid var(--dourado);
+        }
+
+        .menu-tooltip::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-right-color: var(--azul-marinho);
+        }
+
+        .menu-item:hover .menu-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ===== CONTEÚDO PRINCIPAL ===== */
+        .content {
+            flex: 1;
+            padding: 20px;
+            background: var(--cinza-claro);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* ===== LAYOUT EM GRID ===== */
+        .calendario-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+            height: 100%;
+            max-height: calc(100vh - 140px);
+        }
+
+        /* ===== PAINEL ESQUERDO - CALENDÁRIO ===== */
+        .calendario-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* ===== CONTROLES SUPERIORES ===== */
+        .controles-superiores {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .filtro-segmento {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .filtro-segmento label {
+            font-weight: 600;
+            color: var(--azul-marinho);
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .filtro-segmento select {
+            padding: 8px 12px;
+            border: 2px solid var(--cinza-claro);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: var(--branco);
+            font-family: inherit;
+            flex: 1;
+        }
+
+        .filtro-segmento select:focus {
+            outline: none;
+            border-color: var(--azul-marinho);
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+
+        .calendario-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-nav {
+            background: linear-gradient(135deg, var(--azul-marinho) 0%, var(--laranja) 100%);
+            color: var(--branco);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+        }
+
+        .btn-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 58, 138, 0.4);
+        }
+
+        .nav-icon {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .mes-titulo {
+            color: var(--azul-marinho);
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 180px;
+        }
+
+        /* ===== GRADE DO CALENDÁRIO ===== */
+        .calendario-grade {
+            background: var(--branco);
+            border: 2px solid var(--azul-marinho);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dias-semana {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .dia-semana {
+            text-align: center;
+            font-weight: 600;
+            color: var(--azul-marinho);
+            padding: 6px 2px;
+            font-size: 12px;
+        }
+
+        .grade-dias {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 4px;
+            flex: 1;
+        }
+
+        .dia-calendario {
+            border: 2px solid var(--cinza-claro);
+            border-radius: 6px;
+            padding: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 35px;
+        }
+
+        .dia-calendario:hover {
+            border-color: var(--azul-marinho);
+            background: var(--cinza-claro);
+        }
+
+        .dia-calendario.hoje {
+            border-color: var(--laranja);
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        .dia-calendario.selecionado {
+            border-color: var(--dourado);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .dia-calendario.outro-mes {
+            color: var(--cinza-medio);
+            background: rgba(107, 114, 128, 0.05);
+        }
+
+        .numero-dia {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 1px;
+        }
+
+        .evento-marcador {
+            width: 6px;
+            height: 6px;
+            background: var(--laranja);
+            border-radius: 50%;
+            margin-top: 1px;
+            box-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* ===== PAINEL DIREITO - EVENTOS ===== */
+        .eventos-panel {
+            background: var(--branco);
+            border: 2px solid var(--azul-marinho);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .eventos-header {
+            margin-bottom: 15px;
+        }
+
+        .eventos-header h3 {
+            color: var(--azul-marinho);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--dourado);
+            padding-bottom: 6px;
+        }
+
+        .estado-vazio {
+            text-align: center;
+            padding: 20px 15px;
+            color: var(--cinza-medio);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icone-vazio {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        .estado-vazio p {
+            font-size: 14px;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .lista-eventos {
+            flex: 1;
+            overflow-y: auto;
+            max-height: none;
+        }
+
+        .evento-item {
+            border: 1px solid var(--cinza-claro);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .evento-item:hover {
+            border-color: var(--azul-marinho);
+            background: var(--cinza-claro);
+            transform: translateX(2px);
+        }
+
+        .evento-item.selecionado {
+            border-color: var(--dourado);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .evento-disciplina {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .evento-disciplina span:first-child {
+            font-weight: 600;
+            color: var(--azul-marinho);
+            font-size: 13px;
+        }
+
+        .evento-horario {
+            background: var(--laranja);
+            color: var(--branco);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .evento-segmento {
+            color: var(--cinza-medio);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .evento-observacoes {
+            color: var(--cinza-escuro);
+            font-size: 11px;
+            line-height: 1.3;
+            font-style: italic;
+        }
+
+        .separador-evento {
+            height: 1px;
+            background: var(--cinza-claro);
+            margin-top: 6px;
+        }
+
+        /* ===== RESPONSIVO ===== */
+        @media (max-width: 1024px) {
+            .calendario-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+            }
+            
+            .eventos-panel {
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-layout {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+            }
+            
+            .menu-nav {
+                display: flex;
+                justify-content: space-around;
+                padding: 10px 0;
+                width: 100%;
+            }
+            
+            .menu-item {
+                padding: 10px 5px;
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                flex: 1;
+            }
+            
+            .menu-item.active {
+                border-left: none;
+                border-bottom-color: var(--dourado);
+            }
+            
+            .menu-tooltip {
+                display: none;
+            }
+            
+            .header-content {
+                padding: 0 15px;
+            }
+            
+            .logo {
+                height: 40px;
+            }
+            
+            .content {
+                padding: 15px;
+                gap: 12px;
+            }
+            
+            .controles-superiores {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .calendario-controls {
+                justify-content: center;
+            }
+            
+            .dia-semana {
+                font-size: 10px;
+                padding: 4px 1px;
+            }
+            
+            .numero-dia {
+                font-size: 10px;
+            }
+        }
+
+        /* ===== ANIMAÇÕES ===== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .calendario-grade,
+        .eventos-panel {
+            animation: fadeIn 0.4s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="calendario-container">
+        <!-- Cabeçalho Simplificado -->
+        <header class="header">
+            <div class="header-background"></div>
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="logo-santo-antonio.png" alt="Colégio Santo Antônio" class="logo">
+                </div>
+            </div>
+        </header>
+
+        <!-- Layout Principal -->
+        <div class="main-layout">
+            <!-- Menu Lateral SEM Logo -->
+            <nav class="sidebar">
+                <ul class="menu-nav">
+                    <li class="menu-item" data-menu="1">
+                        <span class="menu-icon">🏠</span>
+                        <span class="menu-text">Início</span>
+                        <span class="menu-tooltip">Página inicial</span>
+                    </li>
+                    <li class="menu-item" data-menu="2">
+                        <span class="menu-icon">📅</span>
+                        <span class="menu-text">Agendar</span>
+                        <span class="menu-tooltip">Novo agendamento</span>
+                    </li>
+                    <li class="menu-item" data-menu="3">
+                        <span class="menu-icon">✉️</span>
+                        <span class="menu-text">Suporte</span>
+                        <span class="menu-tooltip">Contato e suporte</span>
+                    </li>
+                    <li class="menu-item active" data-menu="4">
+                        <span class="menu-icon">📆</span>
+                        <span class="menu-text">Calendário</span>
+                        <span class="menu-tooltip">Visualizar calendário</span>
+                    </li>
+                    <li class="menu-item" data-menu="5">
+                        <span class="menu-icon">🔍</span>
+                        <span class="menu-text">Buscar</span>
+                        <span class="menu-tooltip">Busca por alunos</span>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Conteúdo Principal -->
+            <main class="content">
+                <div class="calendario-grid">
+                    <!-- Painel Esquerdo - Calendário -->
+                    <div class="calendario-panel">
+                        <!-- Controles Superiores -->
+                        <div class="controles-superiores">
+                            <div class="filtro-segmento">
+                                <label for="segmento-filtro">Segmento:</label>
+                                <select id="segmento-filtro">
+                                    <option value="Todos os segmentos">Todos os segmentos</option>
+                                    <option value="Fundamental 1">Fundamental 1</option>
+                                    <option value="Fundamental 2">Fundamental 2</option>
+                                    <option value="Ensino Médio">Ensino Médio</option>
+                                </select>
+                            </div>
+
+                            <div class="calendario-controls">
+                                <button id="btn-prev-month" class="btn-nav">
+                                    <span class="nav-icon">‹</span>
+                                </button>
+                                
+                                <h2 id="mes-atual" class="mes-titulo">Janeiro, 2024</h2>
+                                
+                                <button id="btn-next-month" class="btn-nav">
+                                    <span class="nav-icon">›</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Grade do Calendário -->
+                        <div class="calendario-grade">
+                            <!-- Cabeçalho dos Dias -->
+                            <div class="dias-semana">
+                                <div class="dia-semana">Dom</div>
+                                <div class="dia-semana">Seg</div>
+                                <div class="dia-semana">Ter</div>
+                                <div class="dia-semana">Qua</div>
+                                <div class="dia-semana">Qui</div>
+                                <div class="dia-semana">Sex</div>
+                                <div class="dia-semana">Sáb</div>
+                            </div>
+
+                            <!-- Dias do Mês -->
+                            <div id="grade-dias" class="grade-dias">
+                                <!-- Dias serão gerados via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Painel Direito - Eventos -->
+                    <div class="eventos-panel">
+                        <div class="eventos-header">
+                            <h3 id="titulo-eventos">Eventos do Dia</h3>
+                            <div id="estado-vazio" class="estado-vazio">
+                                <div class="icone-vazio">📅</div>
+                                <p id="mensagem-vazio">Selecione uma data para começar</p>
+                            </div>
+                        </div>
+
+                        <div id="lista-eventos" class="lista-eventos">
+                            <!-- Eventos serão carregados via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript permanece o mesmo - apenas as alterações de estilo foram feitas
+        class CalendarioManager {
+            constructor() {
+                this.dataSelecionada = new Date();
+                this.dataReferencia = new Date();
+                this.segmentoSelecionado = "Todos os segmentos";
+                this.eventoSelecionado = null;
+                this.agendamentos = [];
+                
+                this.meses = [
+                    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                ];
+                
+                this.diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                
+                this.init();
+            }
+
+            init() {
+                this.checkAuthentication();
+                this.setupMenuNavigation();
+                this.setupEventListeners();
+                this.carregarAgendamentos();
+                this.renderizarCalendario();
+            }
+
+            checkAuthentication() {
+                const currentUser = localStorage.getItem('currentUser');
+                if (!currentUser) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                this.usuarioLogado = JSON.parse(currentUser);
+            }
+
+            setupEventListeners() {
+                document.addEventListener('click', (e) => {
+                    const menuItem = e.target.closest('.menu-item');
+                    if (menuItem) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const menuId = parseInt(menuItem.getAttribute('data-menu'));
+                        this.navigateToMenu(menuId);
+                        return false;
+                    }
+                });
+
+                const btnPrev = document.getElementById('btn-prev-month');
+                const btnNext = document.getElementById('btn-next-month');
+                const filtroSegmento = document.getElementById('segmento-filtro');
+
+                if (btnPrev) {
+                    btnPrev.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.mesAnterior();
+                    });
+                }
+
+                if (btnNext) {
+                    btnNext.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.proximoMes();
+                    });
+                }
+
+                if (filtroSegmento) {
+                    filtroSegmento.addEventListener('change', (e) => {
+                        e.stopPropagation();
+                        this.segmentoSelecionado = e.target.value;
+                        this.renderizarCalendario();
+                        this.renderizarEventosDoDia();
+                    });
+                }
+            }
+
+            setupMenuNavigation() {
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                document.querySelector('[data-menu="4"]').classList.add('active');
+            }
+
+            navigateToMenu(menuId) {
+                setTimeout(() => {
+                    switch(menuId) {
+                        case 1:
+                            window.location.href = 'dashboard.html';
+                            break;
+                        case 2:
+                            window.location.href = 'agendamento.html';
+                            break;
+                        case 3:
+                            window.location.href = 'suporte.html';
+                            break;
+                        case 4:
+                            break;
+                        case 5:
+                            window.location.href = 'busca.html';
+                            break;
+                    }
+                }, 10);
+            }
+
+            carregarAgendamentos() {
+                const agendamentosSalvos = localStorage.getItem(`agendamentos_${this.usuarioLogado.email}`);
+                this.agendamentos = agendamentosSalvos ? JSON.parse(agendamentosSalvos) : [];
+                this.carregarAgendamentosGlobais();
+            }
+
+            carregarAgendamentosGlobais() {
+                const agendamentosGlobais = [
+                    {
+                        id: 'global_1',
+                        disciplina: 'Matemática',
+                        segmento: 'Fundamental 2',
+                        turma: '6º A',
+                        dataHora: this.gerarDataFutura(2, 9, 0).toISOString(),
+                        observacoes: 'Prova com calculadora',
+                        usuario: 'professor.matematica@santoantonio.edu.br'
+                    },
+                    {
+                        id: 'global_2',
+                        disciplina: 'História',
+                        segmento: 'Ensino Médio',
+                        turma: '1º A',
+                        dataHora: this.gerarDataFutura(5, 14, 0).toISOString(),
+                        observacoes: 'Prova com consulta',
+                        usuario: 'professor.historia@santoantonio.edu.br'
+                    }
+                ];
+                
+                this.agendamentos = [...this.agendamentos, ...agendamentosGlobais];
+            }
+
+            gerarDataFutura(dias, horas, minutos) {
+                const data = new Date();
+                data.setDate(data.getDate() + dias);
+                data.setHours(horas, minutos, 0, 0);
+                return data;
+            }
+
+            mesAnterior() {
+                this.dataReferencia.setMonth(this.dataReferencia.getMonth() - 1);
+                this.renderizarCalendario();
+            }
+
+            proximoMes() {
+                this.dataReferencia.setMonth(this.dataReferencia.getMonth() + 1);
+                this.renderizarCalendario();
+            }
+
+            renderizarCalendario() {
+                this.atualizarTituloMes();
+                this.renderizarGradeDias();
+                this.renderizarEventosDoDia();
+            }
+
+            atualizarTituloMes() {
+                const mesElement = document.getElementById('mes-atual');
+                if (mesElement) {
+                    const mes = this.meses[this.dataReferencia.getMonth()];
+                    const ano = this.dataReferencia.getFullYear();
+                    mesElement.textContent = `${mes}, ${ano}`;
+                }
+            }
+
+            renderizarGradeDias() {
+                const gradeDias = document.getElementById('grade-dias');
+                if (!gradeDias) return;
+
+                gradeDias.innerHTML = '';
+
+                const primeiroDiaMes = new Date(this.dataReferencia.getFullYear(), this.dataReferencia.getMonth(), 1);
+                const ultimoDiaMes = new Date(this.dataReferencia.getFullYear(), this.dataReferencia.getMonth() + 1, 0);
+                
+                const primeiroDiaVisual = new Date(primeiroDiaMes);
+                primeiroDiaVisual.setDate(primeiroDiaVisual.getDate() - primeiroDiaVisual.getDay());
+                
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+
+                for (let i = 0; i < 42; i++) {
+                    const data = new Date(primeiroDiaVisual);
+                    data.setDate(primeiroDiaVisual.getDate() + i);
+                    
+                    const diaElemento = this.criarElementoDia(data, hoje, primeiroDiaMes, ultimoDiaMes);
+                    gradeDias.appendChild(diaElemento);
+                }
+            }
+
+            criarElementoDia(data, hoje, primeiroDiaMes, ultimoDiaMes) {
+                const diaElemento = document.createElement('div');
+                diaElemento.className = 'dia-calendario';
+                
+                const ehMesAtual = data.getMonth() === this.dataReferencia.getMonth();
+                const ehHoje = this.ehMesmoDia(data, hoje);
+                const ehSelecionado = this.ehMesmoDia(data, this.dataSelecionada);
+                
+                if (!ehMesAtual) diaElemento.classList.add('outro-mes');
+                if (ehHoje) diaElemento.classList.add('hoje');
+                if (ehSelecionado) diaElemento.classList.add('selecionado');
+
+                const numeroDia = document.createElement('div');
+                numeroDia.className = 'numero-dia';
+                numeroDia.textContent = data.getDate();
+                diaElemento.appendChild(numeroDia);
+
+                const temEventos = this.temEventosNoDia(data);
+                if (temEventos) {
+                    const marcador = document.createElement('div');
+                    marcador.className = 'evento-marcador';
+                    diaElemento.appendChild(marcador);
+                }
+
+                diaElemento.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.selecionarDia(data);
+                });
+
+                return diaElemento;
+            }
+
+            ehMesmoDia(data1, data2) {
+                return data1.getDate() === data2.getDate() &&
+                       data1.getMonth() === data2.getMonth() &&
+                       data1.getFullYear() === data2.getFullYear();
+            }
+
+            temEventosNoDia(data) {
+                const inicioDia = new Date(data);
+                inicioDia.setHours(0, 0, 0, 0);
+                const fimDia = new Date(data);
+                fimDia.setHours(23, 59, 59, 999);
+
+                return this.agendamentos.some(agendamento => {
+                    if (this.segmentoSelecionado !== "Todos os segmentos" && 
+                        agendamento.segmento !== this.segmentoSelecionado) {
+                        return false;
+                    }
+                    
+                    const dataAgendamento = new Date(agendamento.dataHora);
+                    return dataAgendamento >= inicioDia && dataAgendamento <= fimDia;
+                });
+            }
+
+            selecionarDia(data) {
+                this.dataSelecionada = data;
+                this.renderizarCalendario();
+            }
+
+            renderizarEventosDoDia() {
+                const listaEventos = document.getElementById('lista-eventos');
+                const estadoVazio = document.getElementById('estado-vazio');
+                const mensagemVazio = document.getElementById('mensagem-vazio');
+                const tituloEventos = document.getElementById('titulo-eventos');
+
+                if (!listaEventos || !estadoVazio || !mensagemVazio || !tituloEventos) {
+                    return;
+                }
+
+                const dataFormatada = this.dataSelecionada.toLocaleDateString('pt-BR');
+                tituloEventos.textContent = `Eventos - ${dataFormatada}`;
+
+                const inicioDia = new Date(this.dataSelecionada);
+                inicioDia.setHours(0, 0, 0, 0);
+                const fimDia = new Date(this.dataSelecionada);
+                fimDia.setHours(23, 59, 59, 999);
+
+                const eventosDoDia = this.agendamentos.filter(agendamento => {
+                    if (this.segmentoSelecionado !== "Todos os segmentos" && 
+                        agendamento.segmento !== this.segmentoSelecionado) {
+                        return false;
+                    }
+                    
+                    const dataAgendamento = new Date(agendamento.dataHora);
+                    return dataAgendamento >= inicioDia && dataAgendamento <= fimDia;
+                }).sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
+
+                listaEventos.innerHTML = '';
+
+                if (eventosDoDia.length === 0) {
+                    estadoVazio.style.display = 'flex';
+                    mensagemVazio.textContent = this.agendamentos.length === 0 ? 
+                        'Selecione uma data para começar' : 
+                        'Nenhuma prova agendada para esta data';
+                } else {
+                    estadoVazio.style.display = 'none';
+                    eventosDoDia.forEach(evento => {
+                        const eventoElemento = this.criarElementoEvento(evento);
+                        listaEventos.appendChild(eventoElemento);
+                    });
+                }
+            }
+
+            criarElementoEvento(evento) {
+                const eventoElemento = document.createElement('div');
+                eventoElemento.className = 'evento-item';
+                
+                if (this.eventoSelecionado && this.eventoSelecionado.id === evento.id) {
+                    eventoElemento.classList.add('selecionado');
+                }
+
+                const dataEvento = new Date(evento.dataHora);
+                const horario = dataEvento.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+
+                eventoElemento.innerHTML = `
+                    <div class="evento-disciplina">
+                        <span>${evento.disciplina} - ${evento.turma}</span>
+                        <span class="evento-horario">${horario}</span>
+                    </div>
+                    <div class="evento-segmento">${evento.segmento}</div>
+                    ${evento.observacoes ? `<div class="evento-observacoes">${evento.observacoes}</div>` : ''}
+                    <div class="separador-evento"></div>
+                `;
+
+                eventoElemento.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.selecionarEvento(evento);
+                });
+
+                return eventoElemento;
+            }
+
+            selecionarEvento(evento) {
+                this.eventoSelecionado = evento;
+                this.renderizarEventosDoDia();
+            }
+        }
+
+        function requireAuth() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return false;
+            }
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!requireAuth()) return;
+            new CalendarioManager();
+        });
+    </script>
+</body>
+</html>

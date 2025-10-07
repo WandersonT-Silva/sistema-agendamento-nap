@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Agendamento</title>
+    <style>
+        /* ===== TEMA ESCOLA - SANTO ANTÔNIO ===== */
+        :root {
+            --dourado: #D4AF37;
+            --laranja: #FF6B35;
+            --azul-marinho: #1E3A8A;
+            --branco: #FFFFFF;
+            --cinza-claro: #F8FAFC;
+            --cinza-medio: #6B7280;
+            --cinza-escuro: #1F2937;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--cinza-claro) 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: var(--cinza-escuro);
+        }
+
+        /* ===== CABEÇALHO ===== */
+        .header {
+            position: relative;
+            height: 80px;
+            background: var(--azul-marinho);
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+        }
+
+        .header-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--azul-marinho);
+            z-index: 1;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 30px;
+            height: 100%;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            height: 50px;
+            width: auto;
+            filter: brightness(0) invert(1);
+        }
+
+        /* ===== CONTEÚDO DO LOGIN ===== */
+        .login-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            padding: 40px 20px;
+        }
+
+        .login-box {
+            background: var(--branco);
+            border: 2px solid var(--azul-marinho);
+            border-radius: 15px;
+            padding: 50px 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            color: var(--azul-marinho);
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: var(--cinza-medio);
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        /* ===== BOTÃO MICROSOFT ===== */
+        .microsoft-btn {
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            color: var(--branco);
+            border: none;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.3);
+            margin-bottom: 25px;
+        }
+
+        .microsoft-btn:hover {
+            background: linear-gradient(135deg, #106ebe 0%, #005a9e 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 120, 212, 0.4);
+        }
+
+        .microsoft-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .microsoft-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--branco);
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: #0078d4;
+        }
+
+        /* ===== MENSAGENS ===== */
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .message.error {
+            background: #FEF2F2;
+            color: #DC2626;
+            border: 1px solid #FECACA;
+        }
+
+        .message.success {
+            background: #F0FDF4;
+            color: #16A34A;
+            border: 1px solid #BBF7D0;
+        }
+
+        .message.info {
+            background: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #DBEAFE;
+        }
+
+        /* ===== INFORMAÇÕES ===== */
+        .login-info {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+
+        .login-info h3 {
+            color: var(--dourado);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .login-info p {
+            color: var(--cinza-escuro);
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .login-info ul {
+            text-align: left;
+            color: var(--cinza-escuro);
+            font-size: 13px;
+            line-height: 1.5;
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        .login-info li {
+            margin-bottom: 5px;
+        }
+
+        /* ===== LOADER ===== */
+        .loader {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--branco);
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ===== STATUS ===== */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #F0FDF4;
+            color: #16A34A;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 15px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #16A34A;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* ===== RESPONSIVO ===== */
+        @media (max-width: 768px) {
+            .login-content {
+                padding: 20px;
+            }
+            
+            .login-box {
+                padding: 40px 25px;
+            }
+            
+            .login-header h1 {
+                font-size: 22px;
+            }
+            
+            .microsoft-btn {
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <header class="header">
+            <div class="header-background"></div>
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="logo-santo-antonio.png" alt="Colégio Santo Antônio" class="logo">
+                </div>
+            </div>
+        </header>
+
+        <div class="login-content">
+            <div class="login-box">
+                <div class="login-header">
+                    <h1>Sistema de Agendamento NAP</h1>
+                    <p>Colégio Santo Antônio</p>
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        Sistema seguro - Microsoft Entra ID
+                    </div>
+                </div>
+
+                <div id="message" class="message info">
+                    🔐 Use suas credenciais institucionais do Microsoft 365
+                </div>
+
+                <button id="microsoftLogin" class="microsoft-btn">
+                    <div class="microsoft-icon">MS</div>
+                    <span id="btnText">Entrar com Microsoft</span>
+                    <div id="btnLoader" class="loader" style="display: none;"></div>
+                </button>
+
+                <div class="login-info">
+                    <h3>📋 Informações de Acesso</h3>
+                    <p><strong>Domínio permitido:</strong> @santoantonio.edu.br</p>
+                    <p><strong>Requisitos:</strong></p>
+                    <ul>
+                        <li>Email institucional ativo</li>
+                        <li>Conta Microsoft 365 válida</li>
+                        <li>Permissões concedidas pela administração</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MSAL Biblioteca -->
+    <script src="https://alcdn.msauth.net/browser/2.24.0/js/msal-browser.min.js"></script>
+    
+    <script>
+        // Configuração Microsoft Entra ID - Versão corrigida
+        const msalConfig = {
+            auth: {
+                clientId: "9b518380-2b14-46d7-8a5a-e5a815b48aac",
+                authority: "https://login.microsoftonline.com/common",
+                redirectUri: window.location.origin,
+                knownAuthorities: ["login.microsoftonline.com"]
+            },
+            cache: {
+                cacheLocation: "localStorage",
+                storeAuthStateInCookie: false
+            }
+        };
+
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+        const loginRequest = {
+            scopes: ["User.Read"],
+            prompt: "select_account"
+        };
+
+        class AuthManager {
+            constructor() {
+                this.msalInstance = msalInstance;
+                this.init();
+            }
+
+            async init() {
+                try {
+                    await this.msalInstance.initialize();
+                    
+                    // Verificar redirecionamento
+                    const response = await this.msalInstance.handleRedirectPromise();
+                    if (response) {
+                        this.handleLoginSuccess(response.account);
+                        return;
+                    }
+                    
+                    // Verificar se já está autenticado
+                    const accounts = this.msalInstance.getAllAccounts();
+                    if (accounts.length > 0) {
+                        this.showMessage('Reconectando...', 'success');
+                        this.handleLoginSuccess(accounts[0]);
+                    }
+                } catch (error) {
+                    console.error('Erro ao inicializar:', error);
+                    this.showMessage('Sistema pronto para login', 'info');
+                }
+            }
+
+            async loginWithMicrosoft() {
+                try {
+                    this.setLoading(true);
+                    this.showMessage('Conectando...', 'info');
+                    
+                    await this.msalInstance.loginRedirect(loginRequest);
+                    
+                } catch (error) {
+                    console.error('Erro no login:', error);
+                    this.handleLoginError(error);
+                    this.setLoading(false);
+                }
+            }
+
+            handleLoginSuccess(account) {
+                console.log('Login bem-sucedido:', account);
+                
+                // Verificar domínio do email
+                if (account.username && !account.username.endsWith('@santoantonio.edu.br')) {
+                    this.showMessage('Acesso permitido apenas para emails @santoantonio.edu.br', 'error');
+                    this.msalInstance.logoutRedirect();
+                    return;
+                }
+
+                // Salvar informações do usuário
+                const userData = {
+                    email: account.username,
+                    name: account.name,
+                    id: account.homeAccountId,
+                    tenantId: account.tenantId,
+                    loginTime: new Date().toISOString()
+                };
+
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+                this.showMessage(`Bem-vindo(a), ${userData.name || 'Usuário'}!`, 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+            }
+
+            handleLoginError(error) {
+                let errorMessage = 'Erro ao conectar. ';
+                
+                if (error.errorCode === 'AADSTS700016') {
+                    errorMessage += 'Aplicativo não configurado. Contate o administrador.';
+                } else if (error.errorCode === 'AADSTS50020') {
+                    errorMessage += 'Usuário não encontrado no tenant.';
+                } else if (error.errorCode === 'user_cancelled') {
+                    errorMessage = 'Login cancelado.';
+                } else {
+                    errorMessage += error.message || 'Tente novamente.';
+                }
+                
+                this.showMessage(errorMessage, 'error');
+            }
+
+            showMessage(text, type) {
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = text;
+                messageEl.className = `message ${type}`;
+            }
+
+            setLoading(loading) {
+                const btnText = document.getElementById('btnText');
+                const btnLoader = document.getElementById('btnLoader');
+                const microsoftBtn = document.getElementById('microsoftLogin');
+                
+                if (loading) {
+                    btnText.textContent = 'Redirecionando...';
+                    btnLoader.style.display = 'block';
+                    microsoftBtn.disabled = true;
+                } else {
+                    btnText.textContent = 'Entrar com Microsoft';
+                    btnLoader.style.display = 'none';
+                    microsoftBtn.disabled = false;
+                }
+            }
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            const authManager = new AuthManager();
+            
+            document.getElementById('microsoftLogin').addEventListener('click', function() {
+                authManager.loginWithMicrosoft();
+            });
+
+            // Verificar se há tentativa de acesso não autorizado
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('error') === 'access_denied') {
+                authManager.showMessage('Acesso não autorizado. Use seu email institucional.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
