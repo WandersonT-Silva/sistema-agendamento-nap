@@ -382,12 +382,12 @@
                 this.showMessage('Reconectando...', 'success');
                 this.handleLoginSuccess(accounts[0]);
             } else {
-                this.showMessage('Sistema pronto para login', 'info');
+                this.showMessage('🔐 Use suas credenciais institucionais do Microsoft 365', 'info');
             }
             
         } catch (error) {
             console.error('Erro ao inicializar:', error);
-            this.showMessage('Sistema pronto para login', 'info');
+            this.showMessage('🔐 Use suas credenciais institucionais do Microsoft 365', 'info');
         }
     }
 
@@ -488,6 +488,7 @@
 </script>
 </body>
 </html>
+
 
 
 
