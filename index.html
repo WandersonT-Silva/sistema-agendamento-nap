@@ -381,15 +381,7 @@
                 if (accounts.length > 0) {
                     this.showMessage('Reconectando...', 'success');
                     this.handleLoginSuccess(accounts[0]);
-                } else {
-                    this.showMessage('Sistema pronto para login', 'info');
-                }
-                
-            } catch (error) {
-                console.error('Erro ao inicializar:', error);
-                this.showMessage('Sistema pronto para login', 'info');
-            }
-        }
+                } 
 
         async loginWithMicrosoft() {
             try {
@@ -488,4 +480,5 @@
 </script>
 </body>
 </html>
+
 
