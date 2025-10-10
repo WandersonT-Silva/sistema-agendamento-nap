@@ -696,7 +696,9 @@
     </div>
 
     <script>
-        // JavaScript permanece o mesmo - apenas as alterações de estilo foram feitas
+        // ✅ CONFIGURAÇÃO DE URLS ABSOLUTAS
+        const BASE_URL = 'https://wandersont-silva.github.io/sistema-agendamento-nap';
+
         class CalendarioManager {
             constructor() {
                 this.dataSelecionada = new Date();
@@ -726,23 +728,20 @@
             checkAuthentication() {
                 const currentUser = localStorage.getItem('currentUser');
                 if (!currentUser) {
-                    window.location.href = 'index.html';
+                    // ✅ REDIRECIONAMENTO ABSOLUTO
+                    window.location.href = BASE_URL + '/index.html';
                     return;
                 }
                 this.usuarioLogado = JSON.parse(currentUser);
             }
 
             setupEventListeners() {
-                document.addEventListener('click', (e) => {
-                    const menuItem = e.target.closest('.menu-item');
-                    if (menuItem) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        const menuId = parseInt(menuItem.getAttribute('data-menu'));
+                // Navegação do menu
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const menuId = parseInt(item.getAttribute('data-menu'));
                         this.navigateToMenu(menuId);
-                        return false;
-                    }
+                    });
                 });
 
                 const btnPrev = document.getElementById('btn-prev-month');
@@ -774,32 +773,36 @@
             }
 
             setupMenuNavigation() {
+                // Remove active de todos os itens
                 document.querySelectorAll('.menu-item').forEach(item => {
                     item.classList.remove('active');
                 });
                 
-                document.querySelector('[data-menu="4"]').classList.add('active');
+                // Adiciona active ao item atual
+                const currentMenu = document.querySelector('[data-menu="4"]');
+                if (currentMenu) {
+                    currentMenu.classList.add('active');
+                }
             }
 
             navigateToMenu(menuId) {
-                setTimeout(() => {
-                    switch(menuId) {
-                        case 1:
-                            window.location.href = 'dashboard.html';
-                            break;
-                        case 2:
-                            window.location.href = 'agendamento.html';
-                            break;
-                        case 3:
-                            window.location.href = 'suporte.html';
-                            break;
-                        case 4:
-                            break;
-                        case 5:
-                            window.location.href = 'busca.html';
-                            break;
-                    }
-                }, 10);
+                // ✅ NAVEGAÇÃO COM URLS ABSOLUTAS
+                switch(menuId) {
+                    case 1: // Dashboard
+                        window.location.href = BASE_URL + '/dashboard.html';
+                        break;
+                    case 2: // Agendamento
+                        window.location.href = BASE_URL + '/agendamento.html';
+                        break;
+                    case 3: // Suporte
+                        window.location.href = BASE_URL + '/suporte.html';
+                        break;
+                    case 4: // Calendário (já estamos aqui)
+                        break;
+                    case 5: // Busca
+                        window.location.href = BASE_URL + '/busca.html';
+                        break;
+                }
             }
 
             carregarAgendamentos() {
@@ -1031,17 +1034,14 @@
             }
         }
 
-        function requireAuth() {
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', () => {
             const currentUser = localStorage.getItem('currentUser');
             if (!currentUser) {
-                window.location.href = 'index.html';
-                return false;
+                // ✅ REDIRECIONAMENTO ABSOLUTO
+                window.location.href = BASE_URL + '/index.html';
+                return;
             }
-            return true;
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!requireAuth()) return;
             new CalendarioManager();
         });
     </script>
