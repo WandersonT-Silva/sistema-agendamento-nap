@@ -849,92 +849,135 @@
     </div>
 
     <script>
-        // JavaScript para funcionalidades da tela de suporte
-        document.addEventListener('DOMContentLoaded', function() {
-            // Copiar e-mail
-            document.querySelectorAll('.btn-copiar').forEach(button => {
-                button.addEventListener('click', function() {
-                    const email = this.getAttribute('data-text');
-                    navigator.clipboard.writeText(email).then(() => {
-                        const originalText = this.textContent;
-                        this.textContent = 'Copiado!';
-                        setTimeout(() => {
-                            this.textContent = originalText;
-                        }, 2000);
-                    });
-                });
-            });
+    // ✅ CONFIGURAÇÃO DE URLS ABSOLUTAS
+    const BASE_URL = 'https://wandersont-silva.github.io/sistema-agendamento-nap';
 
-            // Abrir WhatsApp
-            document.querySelectorAll('.btn-whatsapp').forEach(button => {
-                button.addEventListener('click', function() {
-                    const phone = this.getAttribute('data-phone');
-                    const message = 'Olá, preciso de ajuda com o sistema de agendamento NAP.';
-                    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-                    window.open(url, '_blank');
-                });
-            });
+    // JavaScript para funcionalidades da tela de suporte
+    document.addEventListener('DOMContentLoaded', function() {
+        // ✅ VERIFICAÇÃO DE AUTENTICAÇÃO
+        const currentUser = localStorage.getItem('currentUser');
+        if (!currentUser) {
+            window.location.href = BASE_URL + '/index.html';
+            return;
+        }
 
-            // FAQ - Abrir/Fechar perguntas
-            document.querySelectorAll('.faq-pergunta').forEach(pergunta => {
-                pergunta.addEventListener('click', function() {
-                    const faqItem = this.parentElement;
-                    faqItem.classList.toggle('active');
-                });
-            });
-
-            // Envio do formulário
-            document.getElementById('form-contato').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Simular envio
-                const modal = document.getElementById('modal-confirmacao');
-                modal.style.display = 'flex';
-                
-                // Limpar formulário
-                this.reset();
-            });
-
-            // Fechar modal
-            document.getElementById('btn-modal-ok').addEventListener('click', function() {
-                const modal = document.getElementById('modal-confirmacao');
-                modal.style.display = 'none';
-            });
-
-            // Navegação do menu
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const menuId = this.getAttribute('data-menu');
+        // Copiar e-mail
+        document.querySelectorAll('.btn-copiar').forEach(button => {
+            button.addEventListener('click', function() {
+                const email = this.getAttribute('data-text');
+                navigator.clipboard.writeText(email).then(() => {
+                    const originalText = this.textContent;
+                    this.textContent = '📋 Copiado!';
+                    this.style.background = 'linear-gradient(135deg, #16A34A 0%, #22C55E 100%)';
                     
-                    // Remover classe active de todos os itens
-                    document.querySelectorAll('.menu-item').forEach(i => {
-                        i.classList.remove('active');
-                    });
-                    
-                    // Adicionar classe active ao item clicado
-                    this.classList.add('active');
-                    
-                    // Redirecionar para a página correspondente
-                    switch(menuId) {
-                        case '1':
-                            window.location.href = 'index.html';
-                            break;
-                        case '2':
-                            window.location.href = 'agendamento.html';
-                            break;
-                        case '3':
-                            // Já está na página de suporte
-                            break;
-                        case '4':
-                            window.location.href = 'calendario.html';
-                            break;
-                        case '5':
-                            window.location.href = 'busca.html';
-                            break;
-                    }
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                        this.style.background = 'linear-gradient(135deg, var(--azul-marinho) 0%, var(--laranja) 100%)';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Erro ao copiar:', err);
+                    alert('Não foi possível copiar o e-mail. Tente manualmente.');
                 });
             });
         });
-    </script>
+
+        // Abrir WhatsApp
+        document.querySelectorAll('.btn-whatsapp').forEach(button => {
+            button.addEventListener('click', function() {
+                const phone = this.getAttribute('data-phone');
+                const message = 'Olá, preciso de ajuda com o sistema de agendamento NAP.';
+                const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+            });
+        });
+
+        // FAQ - Abrir/Fechar perguntas
+        document.querySelectorAll('.faq-pergunta').forEach(pergunta => {
+            pergunta.addEventListener('click', function() {
+                const faqItem = this.parentElement;
+                const isActive = faqItem.classList.contains('active');
+                
+                // Fechar todos os outros
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Abrir o clicado se não estava ativo
+                if (!isActive) {
+                    faqItem.classList.add('active');
+                }
+            });
+        });
+
+        // Envio do formulário
+        document.getElementById('form-contato').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const assunto = document.getElementById('assunto').value;
+            const mensagem = document.getElementById('mensagem').value;
+            
+            // ✅ VALIDAÇÃO MELHORADA
+            if (!assunto || !mensagem.trim()) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+            
+            // Simular envio (na versão final, integrar com backend/email)
+            console.log('Mensagem de suporte enviada:', { 
+                assunto, 
+                mensagem,
+                usuario: JSON.parse(currentUser).email,
+                timestamp: new Date().toISOString()
+            });
+            
+            const modal = document.getElementById('modal-confirmacao');
+            modal.style.display = 'flex';
+            
+            // Limpar formulário
+            this.reset();
+        });
+
+        // Fechar modal
+        document.getElementById('btn-modal-ok').addEventListener('click', function() {
+            const modal = document.getElementById('modal-confirmacao');
+            modal.style.display = 'none';
+        });
+
+        // ✅ NAVEGAÇÃO DO MENU COM URLS ABSOLUTAS
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const menuId = this.getAttribute('data-menu');
+                
+                // Remover classe active de todos os itens
+                document.querySelectorAll('.menu-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                
+                // Adicionar classe active ao item clicado
+                this.classList.add('active');
+                
+                // Redirecionar para a página correspondente
+                switch(menuId) {
+                    case '1':
+                        window.location.href = BASE_URL + '/dashboard.html';
+                        break;
+                    case '2':
+                        window.location.href = BASE_URL + '/agendamento.html';
+                        break;
+                    case '3':
+                        // Já está na página de suporte
+                        break;
+                    case '4':
+                        window.location.href = BASE_URL + '/calendario.html';
+                        break;
+                    case '5':
+                        window.location.href = BASE_URL + '/busca.html';
+                        break;
+                }
+            });
+        });
+    });
+</script>
 </body>
+
 </html>
