@@ -28,13 +28,13 @@
             background: linear-gradient(135deg, var(--cinza-claro) 0%, #e2e8f0 100%);
             min-height: 100vh;
             color: var(--cinza-escuro);
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         /* ===== CABEÇALHO SIMPLIFICADO ===== */
         .header {
             position: relative;
-            height: 80px;
+            height: 70px;
             background: var(--azul-marinho);
             box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
         }
@@ -55,7 +55,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0 30px;
+            padding: 0 20px;
             height: 100%;
         }
 
@@ -65,7 +65,7 @@
         }
 
         .logo {
-            height: 50px;
+            height: 40px;
             width: auto;
             filter: brightness(0) invert(1);
             transition: transform 0.3s ease;
@@ -78,10 +78,57 @@
         /* ===== LAYOUT PRINCIPAL ===== */
         .main-layout {
             display: flex;
-            height: calc(100vh - 80px);
+            flex-direction: column;
+            min-height: calc(100vh - 70px);
         }
 
-        /* ===== MENU LATERAL SEM LOGO ===== */
+        /* ===== MENU SUPERIOR PARA MOBILE ===== */
+        .mobile-menu {
+            display: none;
+            background: var(--branco);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .mobile-nav {
+            display: flex;
+            justify-content: space-around;
+            list-style: none;
+            padding: 10px 0;
+        }
+
+        .mobile-menu-item {
+            text-align: center;
+            padding: 8px 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            flex: 1;
+        }
+
+        .mobile-menu-item.active {
+            border-bottom-color: var(--dourado);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .mobile-menu-icon {
+            font-size: 18px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .mobile-menu-text {
+            font-size: 10px;
+            color: var(--cinza-medio);
+            font-weight: 500;
+        }
+
+        .mobile-menu-item.active .mobile-menu-text {
+            color: var(--azul-marinho);
+            font-weight: 600;
+        }
+
+        /* ===== MENU LATERAL PARA DESKTOP ===== */
         .sidebar {
             width: 90px;
             background: var(--branco);
@@ -181,9 +228,9 @@
         /* ===== CONTEÚDO PRINCIPAL ===== */
         .content {
             flex: 1;
-            padding: 20px;
+            padding: 15px;
             background: var(--cinza-claro);
-            overflow: hidden;
+            overflow: auto;
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -192,32 +239,32 @@
         /* ===== LAYOUT EM GRID ===== */
         .calendario-grid {
             display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 20px;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 15px;
             height: 100%;
-            max-height: calc(100vh - 140px);
+            min-height: 500px;
         }
 
         /* ===== PAINEL ESQUERDO - CALENDÁRIO ===== */
         .calendario-panel {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
+            min-height: 400px;
         }
 
         /* ===== CONTROLES SUPERIORES ===== */
         .controles-superiores {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .filtro-segmento {
             display: flex;
             align-items: center;
             gap: 10px;
-            flex: 1;
         }
 
         .filtro-segmento label {
@@ -225,10 +272,11 @@
             color: var(--azul-marinho);
             font-size: 14px;
             white-space: nowrap;
+            min-width: 80px;
         }
 
         .filtro-segmento select {
-            padding: 8px 12px;
+            padding: 10px 12px;
             border: 2px solid var(--cinza-claro);
             border-radius: 8px;
             font-size: 14px;
@@ -247,15 +295,16 @@
         .calendario-controls {
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: space-between;
+            gap: 10px;
         }
 
         .btn-nav {
             background: linear-gradient(135deg, var(--azul-marinho) 0%, var(--laranja) 100%);
             color: var(--branco);
             border: none;
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
@@ -263,6 +312,7 @@
             justify-content: center;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+            flex-shrink: 0;
         }
 
         .btn-nav:hover {
@@ -271,16 +321,17 @@
         }
 
         .nav-icon {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
         }
 
         .mes-titulo {
             color: var(--azul-marinho);
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
             text-align: center;
-            min-width: 180px;
+            flex: 1;
+            padding: 0 10px;
         }
 
         /* ===== GRADE DO CALENDÁRIO ===== */
@@ -288,17 +339,18 @@
             background: var(--branco);
             border: 2px solid var(--azul-marinho);
             border-radius: 12px;
-            padding: 15px;
+            padding: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-height: 300px;
         }
 
         .dias-semana {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
+            gap: 2px;
             margin-bottom: 8px;
         }
 
@@ -306,22 +358,22 @@
             text-align: center;
             font-weight: 600;
             color: var(--azul-marinho);
-            padding: 6px 2px;
-            font-size: 12px;
+            padding: 8px 2px;
+            font-size: 11px;
         }
 
         .grade-dias {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             grid-template-rows: repeat(6, 1fr);
-            gap: 4px;
+            gap: 3px;
             flex: 1;
         }
 
         .dia-calendario {
             border: 2px solid var(--cinza-claro);
             border-radius: 6px;
-            padding: 4px;
+            padding: 6px 2px;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
@@ -329,7 +381,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            min-height: 35px;
+            min-height: 45px;
         }
 
         .dia-calendario:hover {
@@ -354,8 +406,8 @@
 
         .numero-dia {
             font-weight: 600;
-            font-size: 11px;
-            margin-bottom: 1px;
+            font-size: 12px;
+            margin-bottom: 2px;
         }
 
         .evento-marcador {
@@ -363,7 +415,7 @@
             height: 6px;
             background: var(--laranja);
             border-radius: 50%;
-            margin-top: 1px;
+            margin-top: 2px;
             box-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.8);
         }
@@ -373,22 +425,22 @@
             background: var(--branco);
             border: 2px solid var(--azul-marinho);
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
-            height: 100%;
+            min-height: 250px;
         }
 
         .eventos-header {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .eventos-header h3 {
             color: var(--azul-marinho);
             font-size: 16px;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border-bottom: 2px solid var(--dourado);
             padding-bottom: 6px;
         }
@@ -483,83 +535,159 @@
             margin-top: 6px;
         }
 
-        /* ===== RESPONSIVO ===== */
-        @media (max-width: 1024px) {
+        /* ===== MEDIA QUERIES PARA RESPONSIVIDADE ===== */
+        
+        /* Desktop - Layout original */
+        @media (min-width: 1025px) {
+            .main-layout {
+                flex-direction: row;
+                height: calc(100vh - 70px);
+            }
+            
+            .mobile-menu {
+                display: none;
+            }
+            
+            .sidebar {
+                display: flex;
+            }
+            
+            .calendario-grid {
+                grid-template-columns: 1fr 320px;
+                grid-template-rows: 1fr;
+            }
+            
+            .controles-superiores {
+                flex-direction: row;
+                align-items: center;
+            }
+            
+            .calendario-controls {
+                justify-content: flex-end;
+            }
+            
+            .mes-titulo {
+                min-width: 180px;
+            }
+        }
+
+        /* Tablet */
+        @media (max-width: 1024px) and (min-width: 769px) {
             .calendario-grid {
                 grid-template-columns: 1fr;
                 grid-template-rows: 1fr auto;
             }
             
             .eventos-panel {
-                height: 250px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-layout {
-                flex-direction: column;
-                height: auto;
+                height: 300px;
             }
             
             .sidebar {
-                width: 100%;
-                height: auto;
-                flex-direction: row;
-            }
-            
-            .menu-nav {
-                display: flex;
-                justify-content: space-around;
-                padding: 10px 0;
-                width: 100%;
-            }
-            
-            .menu-item {
-                padding: 10px 5px;
-                border-left: none;
-                border-bottom: 3px solid transparent;
-                flex: 1;
-            }
-            
-            .menu-item.active {
-                border-left: none;
-                border-bottom-color: var(--dourado);
-            }
-            
-            .menu-tooltip {
                 display: none;
             }
             
-            .header-content {
-                padding: 0 15px;
+            .mobile-menu {
+                display: block;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .header {
+                height: 60px;
             }
             
             .logo {
-                height: 40px;
+                height: 35px;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .mobile-menu {
+                display: block;
             }
             
             .content {
-                padding: 15px;
-                gap: 12px;
-            }
-            
-            .controles-superiores {
-                flex-direction: column;
-                align-items: stretch;
+                padding: 10px;
                 gap: 10px;
             }
             
-            .calendario-controls {
-                justify-content: center;
+            .calendario-grid {
+                gap: 10px;
+            }
+            
+            .calendario-panel {
+                gap: 10px;
+            }
+            
+            .calendario-grade {
+                padding: 8px;
+                min-height: 350px;
             }
             
             .dia-semana {
                 font-size: 10px;
+                padding: 6px 1px;
+            }
+            
+            .dia-calendario {
+                min-height: 40px;
                 padding: 4px 1px;
             }
             
             .numero-dia {
+                font-size: 11px;
+            }
+            
+            .eventos-panel {
+                padding: 12px;
+                min-height: 200px;
+            }
+            
+            .btn-nav {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .nav-icon {
+                font-size: 16px;
+            }
+            
+            .mes-titulo {
+                font-size: 14px;
+            }
+        }
+
+        /* Mobile muito pequeno */
+        @media (max-width: 480px) {
+            .dia-calendario {
+                min-height: 35px;
+            }
+            
+            .numero-dia {
                 font-size: 10px;
+            }
+            
+            .evento-disciplina {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+            
+            .evento-horario {
+                align-self: flex-end;
+            }
+            
+            .filtro-segmento {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 5px;
+            }
+            
+            .filtro-segmento label {
+                min-width: auto;
             }
         }
 
@@ -593,9 +721,35 @@
             </div>
         </header>
 
+        <!-- Menu Mobile -->
+        <nav class="mobile-menu">
+            <ul class="mobile-nav">
+                <li class="mobile-menu-item" data-menu="1">
+                    <span class="mobile-menu-icon">🏠</span>
+                    <span class="mobile-menu-text">Início</span>
+                </li>
+                <li class="mobile-menu-item" data-menu="2">
+                    <span class="mobile-menu-icon">📅</span>
+                    <span class="mobile-menu-text">Agendar</span>
+                </li>
+                <li class="mobile-menu-item" data-menu="3">
+                    <span class="mobile-menu-icon">✉️</span>
+                    <span class="mobile-menu-text">Suporte</span>
+                </li>
+                <li class="mobile-menu-item active" data-menu="4">
+                    <span class="mobile-menu-icon">📆</span>
+                    <span class="mobile-menu-text">Calendário</span>
+                </li>
+                <li class="mobile-menu-item" data-menu="5">
+                    <span class="mobile-menu-icon">🔍</span>
+                    <span class="mobile-menu-text">Buscar</span>
+                </li>
+            </ul>
+        </nav>
+
         <!-- Layout Principal -->
         <div class="main-layout">
-            <!-- Menu Lateral SEM Logo -->
+            <!-- Menu Lateral para Desktop -->
             <nav class="sidebar">
                 <ul class="menu-nav">
                     <li class="menu-item" data-menu="1">
@@ -723,6 +877,7 @@
                 this.setupEventListeners();
                 this.carregarAgendamentos();
                 this.renderizarCalendario();
+                this.setupMobileMenu();
             }
 
             checkAuthentication() {
@@ -736,7 +891,7 @@
             }
 
             setupEventListeners() {
-                // Navegação do menu
+                // Navegação do menu desktop
                 document.querySelectorAll('.menu-item').forEach(item => {
                     item.addEventListener('click', () => {
                         const menuId = parseInt(item.getAttribute('data-menu'));
@@ -772,16 +927,31 @@
                 }
             }
 
+            setupMobileMenu() {
+                // Navegação do menu mobile
+                document.querySelectorAll('.mobile-menu-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const menuId = parseInt(item.getAttribute('data-menu'));
+                        this.navigateToMenu(menuId);
+                    });
+                });
+            }
+
             setupMenuNavigation() {
                 // Remove active de todos os itens
-                document.querySelectorAll('.menu-item').forEach(item => {
+                document.querySelectorAll('.menu-item, .mobile-menu-item').forEach(item => {
                     item.classList.remove('active');
                 });
                 
                 // Adiciona active ao item atual
-                const currentMenu = document.querySelector('[data-menu="4"]');
-                if (currentMenu) {
-                    currentMenu.classList.add('active');
+                const currentMenuDesktop = document.querySelector('[data-menu="4"]');
+                const currentMenuMobile = document.querySelector('.mobile-menu-item[data-menu="4"]');
+                
+                if (currentMenuDesktop) {
+                    currentMenuDesktop.classList.add('active');
+                }
+                if (currentMenuMobile) {
+                    currentMenuMobile.classList.add('active');
                 }
             }
 
