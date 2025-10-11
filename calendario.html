@@ -6,18 +6,21 @@
     <title>Calendário - Sistema NAP</title>
     <link rel="icon" type="image/png" sizes="32x32" href="logo.png">
     <link rel="icon" type="image/png" sizes="16x16" href="logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href=""logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
+    <!-- MSAL.js para integração com Microsoft List -->
+    <script src="https://alcdn.msauth.net/browser/2.24.0/js/msal-browser.min.js"></script>
     <style>
         /* ===== TEMA ESCOLA - SANTO ANTÔNIO ===== */
         :root {
-            /* Cores oficiais da escola */
-            --dourado: #D4AF37;         /* Dourado clássico */
-            --laranja: #FF6B35;         /* Laranja vibrante */
-            --azul-marinho: #1E3A8A;    /* Azul marinho */
-            --branco: #FFFFFF;          /* Branco */
-            --cinza-claro: #F8FAFC;     /* Cinza muito claro */
-            --cinza-medio: #6B7280;     /* Cinza médio */
-            --cinza-escuro: #1F2937;    /* Cinza escuro */
+            --dourado: #D4AF37;
+            --laranja: #FF6B35;
+            --azul-marinho: #1E3A8A;
+            --branco: #FFFFFF;
+            --cinza-claro: #F8FAFC;
+            --cinza-medio: #6B7280;
+            --cinza-escuro: #1F2937;
+            --verde: #16A34A;
+            --vermelho: #DC2626;
         }
 
         * {
@@ -76,6 +79,28 @@
 
         .logo:hover {
             transform: scale(1.05);
+        }
+
+        /* Status da Integração */
+        .status-integracao {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--azul-marinho);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .status-integracao.conectado {
+            background: var(--verde);
+        }
+
+        .status-integracao.erro {
+            background: var(--vermelho);
         }
 
         /* ===== LAYOUT PRINCIPAL ===== */
@@ -264,10 +289,17 @@
             gap: 12px;
         }
 
+        .filtro-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
         .filtro-segmento {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex: 1;
         }
 
         .filtro-segmento label {
@@ -290,6 +322,37 @@
         }
 
         .filtro-segmento select:focus {
+            outline: none;
+            border-color: var(--azul-marinho);
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+
+        .busca-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .busca-container label {
+            font-weight: 600;
+            color: var(--azul-marinho);
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .busca-input {
+            padding: 10px 12px;
+            border: 2px solid var(--cinza-claro);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: var(--branco);
+            font-family: inherit;
+            flex: 1;
+        }
+
+        .busca-input:focus {
             outline: none;
             border-color: var(--azul-marinho);
             box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
@@ -405,6 +468,10 @@
         .dia-calendario.outro-mes {
             color: var(--cinza-medio);
             background: rgba(107, 114, 128, 0.05);
+        }
+
+        .dia-calendario.com-eventos {
+            border-color: var(--laranja);
         }
 
         .numero-dia {
@@ -565,6 +632,10 @@
                 align-items: center;
             }
             
+            .filtro-container {
+                flex-direction: row;
+            }
+            
             .calendario-controls {
                 justify-content: flex-end;
             }
@@ -661,6 +732,10 @@
             .mes-titulo {
                 font-size: 14px;
             }
+            
+            .filtro-container {
+                flex-direction: column;
+            }
         }
 
         /* Mobile muito pequeno */
@@ -710,10 +785,25 @@
         .eventos-panel {
             animation: fadeIn 0.4s ease-out;
         }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .atualizando {
+            animation: pulse 1s ease-in-out;
+        }
     </style>
 </head>
 <body>
     <div class="calendario-container">
+        <!-- Status da Integração -->
+        <div id="status-integracao" class="status-integracao" style="display: none;">
+            🔄 Conectando...
+        </div>
+
         <!-- Cabeçalho Simplificado -->
         <header class="header">
             <div class="header-background"></div>
@@ -790,14 +880,22 @@
                     <div class="calendario-panel">
                         <!-- Controles Superiores -->
                         <div class="controles-superiores">
-                            <div class="filtro-segmento">
-                                <label for="segmento-filtro">Segmento:</label>
-                                <select id="segmento-filtro">
-                                    <option value="Todos os segmentos">Todos os segmentos</option>
-                                    <option value="Fundamental 1">Fundamental 1</option>
-                                    <option value="Fundamental 2">Fundamental 2</option>
-                                    <option value="Ensino Médio">Ensino Médio</option>
-                                </select>
+                            <div class="filtro-container">
+                                <div class="filtro-segmento">
+                                    <label for="segmento-filtro">Segmento:</label>
+                                    <select id="segmento-filtro">
+                                        <option value="Todos os segmentos">Todos os segmentos</option>
+                                        <option value="Fundamental 1">Fundamental 1</option>
+                                        <option value="Fundamental 2">Fundamental 2</option>
+                                        <option value="Ensino Médio">Ensino Médio</option>
+                                    </select>
+                                </div>
+
+                                <div class="busca-container">
+                                    <label for="busca-input">🔍 Buscar:</label>
+                                    <input type="text" id="busca-input" class="busca-input" 
+                                           placeholder="Digite disciplina, turma ou observações...">
+                                </div>
                             </div>
 
                             <div class="calendario-controls">
@@ -809,6 +907,10 @@
                                 
                                 <button id="btn-next-month" class="btn-nav">
                                     <span class="nav-icon">›</span>
+                                </button>
+                                
+                                <button id="btn-atualizar" class="btn-nav" title="Atualizar agendamentos">
+                                    <span class="nav-icon">🔄</span>
                                 </button>
                             </div>
                         </div>
@@ -855,14 +957,113 @@
     <script>
         // ✅ CONFIGURAÇÃO DE URLS ABSOLUTAS
         const BASE_URL = 'https://wandersont-silva.github.io/sistema-agendamento-nap';
+        
+        // ✅ CONFIGURAÇÃO MICROSOFT LIST
+        const MS_LIST_CONFIG = {
+            siteUrl: 'https://inesacsa-my.sharepoint.com/personal/wandeson_silva_santoantonio_edu_br',
+            listName: 'NAP',
+            clientId: '9b518380-2b14-46d7-8a5a-e5a815b48aac',
+            tenantId: '9d4a2bfa-8172-4b94-bd8a-eafb5cf478cc',
+            redirectUri: `${BASE_URL}/calendario.html`
+        };
 
+        // ✅ CONFIGURAÇÃO MSAL
+        const msalConfig = {
+            auth: {
+                clientId: MS_LIST_CONFIG.clientId,
+                authority: `https://login.microsoftonline.com/${MS_LIST_CONFIG.tenantId}`,
+                redirectUri: MS_LIST_CONFIG.redirectUri,
+                knownAuthorities: ['login.microsoftonline.com']
+            },
+            cache: {
+                cacheLocation: "localStorage",
+                storeAuthStateInCookie: false
+            }
+        };
+
+        const msalRequest = {
+            scopes: [
+                "https://graph.microsoft.com/Sites.ReadWrite.All",
+                "https://graph.microsoft.com/Files.ReadWrite.All", 
+                "https://graph.microsoft.com/User.Read"
+            ]
+        };
+
+        // ✅ GERENCIADOR DE AUTENTICAÇÃO MSAL
+        class MSALAuthManager {
+            constructor() {
+                this.msalInstance = null;
+                this.account = null;
+                this.isInitialized = false;
+            }
+
+            async initialize() {
+                if (this.isInitialized) return;
+                
+                try {
+                    this.msalInstance = new msal.PublicClientApplication(msalConfig);
+                    await this.msalInstance.initialize();
+                    
+                    const response = await this.msalInstance.handleRedirectPromise();
+                    if (response) {
+                        this.account = response.account;
+                        console.log('✅ Login via redirect realizado:', this.account);
+                    } else {
+                        const accounts = this.msalInstance.getAllAccounts();
+                        if (accounts.length > 0) {
+                            this.account = accounts[0];
+                            console.log('✅ Conta encontrada no cache:', this.account);
+                        }
+                    }
+                    
+                    this.isInitialized = true;
+                } catch (error) {
+                    console.error('❌ Erro ao inicializar MSAL:', error);
+                }
+            }
+
+            async getAccessToken() {
+                if (!this.isInitialized) {
+                    await this.initialize();
+                }
+
+                if (!this.account) {
+                    return null;
+                }
+
+                try {
+                    const silentRequest = {
+                        scopes: msalRequest.scopes,
+                        account: this.account,
+                        forceRefresh: false
+                    };
+
+                    const response = await this.msalInstance.acquireTokenSilent(silentRequest);
+                    console.log('✅ Token adquirido silenciosamente');
+                    return response.accessToken;
+
+                } catch (silentError) {
+                    console.warn('Falha no token silencioso:', silentError);
+                    return null;
+                }
+            }
+
+            isAuthenticated() {
+                return this.account !== null;
+            }
+        }
+
+        // ✅ GERENCIADOR PRINCIPAL DO CALENDÁRIO
         class CalendarioManager {
             constructor() {
+                this.authManager = new MSALAuthManager();
                 this.dataSelecionada = new Date();
                 this.dataReferencia = new Date();
                 this.segmentoSelecionado = "Todos os segmentos";
+                this.termoBusca = "";
                 this.eventoSelecionado = null;
                 this.agendamentos = [];
+                this.intervaloAtualizacao = null;
                 
                 this.meses = [
                     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -874,19 +1075,21 @@
                 this.init();
             }
 
-            init() {
+            async init() {
+                await this.authManager.initialize();
                 this.checkAuthentication();
                 this.setupMenuNavigation();
                 this.setupEventListeners();
-                this.carregarAgendamentos();
-                this.renderizarCalendario();
                 this.setupMobileMenu();
+                await this.carregarAgendamentos();
+                this.renderizarCalendario();
+                this.iniciarAtualizacaoAutomatica();
+                await this.testarIntegracaoMicrosoftList();
             }
 
             checkAuthentication() {
                 const currentUser = localStorage.getItem('currentUser');
                 if (!currentUser) {
-                    // ✅ REDIRECIONAMENTO ABSOLUTO
                     window.location.href = BASE_URL + '/index.html';
                     return;
                 }
@@ -894,7 +1097,7 @@
             }
 
             setupEventListeners() {
-                // Navegação do menu desktop
+                // Navegação do menu
                 document.querySelectorAll('.menu-item').forEach(item => {
                     item.addEventListener('click', () => {
                         const menuId = parseInt(item.getAttribute('data-menu'));
@@ -902,36 +1105,46 @@
                     });
                 });
 
-                const btnPrev = document.getElementById('btn-prev-month');
-                const btnNext = document.getElementById('btn-next-month');
-                const filtroSegmento = document.getElementById('segmento-filtro');
+                // Controles do calendário
+                document.getElementById('btn-prev-month').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.mesAnterior();
+                });
 
-                if (btnPrev) {
-                    btnPrev.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.mesAnterior();
-                    });
-                }
+                document.getElementById('btn-next-month').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.proximoMes();
+                });
 
-                if (btnNext) {
-                    btnNext.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.proximoMes();
-                    });
-                }
+                document.getElementById('btn-atualizar').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.atualizarAgendamentos();
+                });
 
-                if (filtroSegmento) {
-                    filtroSegmento.addEventListener('change', (e) => {
-                        e.stopPropagation();
-                        this.segmentoSelecionado = e.target.value;
+                // Filtros e busca
+                document.getElementById('segmento-filtro').addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    this.segmentoSelecionado = e.target.value;
+                    this.renderizarCalendario();
+                });
+
+                document.getElementById('busca-input').addEventListener('input', (e) => {
+                    e.stopPropagation();
+                    this.termoBusca = e.target.value.toLowerCase();
+                    this.renderizarCalendario();
+                });
+
+                // Atualização em tempo real - escuta mudanças no localStorage
+                window.addEventListener('storage', (e) => {
+                    if (e.key === `agendamentos_${this.usuarioLogado.email}`) {
+                        console.log('🔄 Mudança detectada no localStorage, atualizando...');
+                        this.carregarAgendamentos();
                         this.renderizarCalendario();
-                        this.renderizarEventosDoDia();
-                    });
-                }
+                    }
+                });
             }
 
             setupMobileMenu() {
-                // Navegação do menu mobile
                 document.querySelectorAll('.mobile-menu-item').forEach(item => {
                     item.addEventListener('click', () => {
                         const menuId = parseInt(item.getAttribute('data-menu'));
@@ -941,12 +1154,10 @@
             }
 
             setupMenuNavigation() {
-                // Remove active de todos os itens
                 document.querySelectorAll('.menu-item, .mobile-menu-item').forEach(item => {
                     item.classList.remove('active');
                 });
                 
-                // Adiciona active ao item atual
                 const currentMenuDesktop = document.querySelector('[data-menu="4"]');
                 const currentMenuMobile = document.querySelector('.mobile-menu-item[data-menu="4"]');
                 
@@ -959,63 +1170,211 @@
             }
 
             navigateToMenu(menuId) {
-                // ✅ NAVEGAÇÃO COM URLS ABSOLUTAS
                 switch(menuId) {
-                    case 1: // Dashboard
+                    case 1:
                         window.location.href = BASE_URL + '/dashboard.html';
                         break;
-                    case 2: // Agendamento
+                    case 2:
                         window.location.href = BASE_URL + '/agendamento.html';
                         break;
-                    case 3: // Suporte
+                    case 3:
                         window.location.href = BASE_URL + '/suporte.html';
                         break;
-                    case 4: // Calendário (já estamos aqui)
+                    case 4:
                         break;
-                    case 5: // Busca
+                    case 5:
                         window.location.href = BASE_URL + '/busca.html';
                         break;
                 }
             }
 
-            carregarAgendamentos() {
+            // ✅ MÉTODOS DE INTEGRAÇÃO MICROSOFT LIST
+            async testarIntegracaoMicrosoftList() {
+                try {
+                    this.mostrarStatusIntegracao('🔄 Conectando com Microsoft List...');
+                    
+                    const token = await this.authManager.getAccessToken();
+                    if (!token) {
+                        this.mostrarStatusIntegracao('⚠️ Use o modo offline', 'erro');
+                        return;
+                    }
+
+                    const sitePath = this.extrairSitePath(MS_LIST_CONFIG.siteUrl);
+                    const response = await fetch(
+                        `https://graph.microsoft.com/v1.0/sites/${sitePath}/lists/${MS_LIST_CONFIG.listName}`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        MS_LIST_CONFIG.listId = data.id;
+                        this.mostrarStatusIntegracao('✅ Conectado à Microsoft List', 'conectado');
+                        console.log('✅ List ID encontrado:', data.id);
+                    } else {
+                        this.mostrarStatusIntegracao('⚠️ Usando dados locais', 'erro');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Erro na integração:', error);
+                    this.mostrarStatusIntegracao('⚠️ Modo offline ativo', 'erro');
+                }
+            }
+
+            mostrarStatusIntegracao(mensagem, tipo = '') {
+                const statusElement = document.getElementById('status-integracao');
+                if (statusElement) {
+                    statusElement.textContent = mensagem;
+                    statusElement.className = `status-integracao ${tipo}`;
+                    statusElement.style.display = 'block';
+                }
+            }
+
+            extrairSitePath(siteUrl) {
+                const url = new URL(siteUrl);
+                return `${url.hostname}:${url.pathname}`;
+            }
+
+            // ✅ MÉTODOS DE CARREGAMENTO DE DADOS
+            async carregarAgendamentos() {
+                try {
+                    let agendamentosDaList = null;
+                    
+                    // Tenta carregar da Microsoft List primeiro
+                    const token = await this.authManager.getAccessToken();
+                    if (token) {
+                        agendamentosDaList = await this.carregarDaMicrosoftList(token);
+                    }
+
+                    if (agendamentosDaList && agendamentosDaList.length > 0) {
+                        this.agendamentos = agendamentosDaList;
+                        console.log('✅ Agendamentos carregados da Microsoft List:', this.agendamentos.length);
+                    } else {
+                        // Fallback para localStorage
+                        await this.carregarAgendamentosLocal();
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro ao carregar agendamentos:', error);
+                    await this.carregarAgendamentosLocal();
+                }
+            }
+
+            async carregarDaMicrosoftList(token) {
+                try {
+                    const sitePath = this.extrairSitePath(MS_LIST_CONFIG.siteUrl);
+                    
+                    const response = await fetch(
+                        `https://graph.microsoft.com/v1.0/sites/${sitePath}/lists/${MS_LIST_CONFIG.listName}/items?expand=fields&$top=1000`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    return data.value.map(item => ({
+                        id: item.id,
+                        microsoftId: item.id,
+                        disciplina: item.fields.Disciplina,
+                        segmento: item.fields.Segmento,
+                        turma: item.fields.Turma,
+                        dataHora: item.fields.Time,
+                        observacoes: item.fields.Observacoes,
+                        usuario: item.fields.User,
+                        dataCriacao: item.fields.Criado
+                    }));
+
+                } catch (error) {
+                    console.warn('Não foi possível carregar da Microsoft List:', error);
+                    return null;
+                }
+            }
+
+            async carregarAgendamentosLocal() {
                 const agendamentosSalvos = localStorage.getItem(`agendamentos_${this.usuarioLogado.email}`);
                 this.agendamentos = agendamentosSalvos ? JSON.parse(agendamentosSalvos) : [];
-                this.carregarAgendamentosGlobais();
+                console.log('📁 Agendamentos carregados localmente:', this.agendamentos.length);
             }
 
-            carregarAgendamentosGlobais() {
-                const agendamentosGlobais = [
-                    {
-                        id: 'global_1',
-                        disciplina: 'Matemática',
-                        segmento: 'Fundamental 2',
-                        turma: '6º A',
-                        dataHora: this.gerarDataFutura(2, 9, 0).toISOString(),
-                        observacoes: 'Prova com calculadora',
-                        usuario: 'professor.matematica@santoantonio.edu.br'
-                    },
-                    {
-                        id: 'global_2',
-                        disciplina: 'História',
-                        segmento: 'Ensino Médio',
-                        turma: '1º A',
-                        dataHora: this.gerarDataFutura(5, 14, 0).toISOString(),
-                        observacoes: 'Prova com consulta',
-                        usuario: 'professor.historia@santoantonio.edu.br'
+            // ✅ MÉTODOS DE ATUALIZAÇÃO EM TEMPO REAL
+            iniciarAtualizacaoAutomatica() {
+                // Atualiza a cada 30 segundos
+                this.intervaloAtualizacao = setInterval(() => {
+                    this.verificarAtualizacoes();
+                }, 30000);
+            }
+
+            async verificarAtualizacoes() {
+                try {
+                    const token = await this.authManager.getAccessToken();
+                    if (token) {
+                        await this.carregarAgendamentos();
+                        this.renderizarCalendario();
+                        console.log('🔄 Calendário atualizado automaticamente');
                     }
-                ];
+                } catch (error) {
+                    console.log('🔁 Tentando atualizar via localStorage...');
+                    await this.carregarAgendamentosLocal();
+                    this.renderizarCalendario();
+                }
+            }
+
+            async atualizarAgendamentos() {
+                const btnAtualizar = document.getElementById('btn-atualizar');
+                btnAtualizar.classList.add('atualizando');
                 
-                this.agendamentos = [...this.agendamentos, ...agendamentosGlobais];
+                try {
+                    await this.carregarAgendamentos();
+                    this.renderizarCalendario();
+                    this.mostrarStatusIntegracao('✅ Calendário atualizado!', 'conectado');
+                    
+                    setTimeout(() => {
+                        this.mostrarStatusIntegracao('✅ Conectado à Microsoft List', 'conectado');
+                    }, 2000);
+                    
+                } catch (error) {
+                    this.mostrarStatusIntegracao('❌ Erro na atualização', 'erro');
+                } finally {
+                    setTimeout(() => {
+                        btnAtualizar.classList.remove('atualizando');
+                    }, 1000);
+                }
             }
 
-            gerarDataFutura(dias, horas, minutos) {
-                const data = new Date();
-                data.setDate(data.getDate() + dias);
-                data.setHours(horas, minutos, 0, 0);
-                return data;
+            // ✅ MÉTODOS DE FILTRO E BUSCA
+            filtrarAgendamentos() {
+                return this.agendamentos.filter(agendamento => {
+                    // Filtro por segmento
+                    if (this.segmentoSelecionado !== "Todos os segmentos" && 
+                        agendamento.segmento !== this.segmentoSelecionado) {
+                        return false;
+                    }
+                    
+                    // Filtro por busca
+                    if (this.termoBusca) {
+                        const busca = this.termoBusca.toLowerCase();
+                        return agendamento.disciplina.toLowerCase().includes(busca) ||
+                               agendamento.turma.toLowerCase().includes(busca) ||
+                               (agendamento.observacoes && agendamento.observacoes.toLowerCase().includes(busca));
+                    }
+                    
+                    return true;
+                });
             }
 
+            // ✅ MÉTODOS DO CALENDÁRIO (EXISTENTES - ATUALIZADOS)
             mesAnterior() {
                 this.dataReferencia.setMonth(this.dataReferencia.getMonth() - 1);
                 this.renderizarCalendario();
@@ -1072,17 +1431,18 @@
                 const ehMesAtual = data.getMonth() === this.dataReferencia.getMonth();
                 const ehHoje = this.ehMesmoDia(data, hoje);
                 const ehSelecionado = this.ehMesmoDia(data, this.dataSelecionada);
+                const temEventos = this.temEventosNoDia(data);
                 
                 if (!ehMesAtual) diaElemento.classList.add('outro-mes');
                 if (ehHoje) diaElemento.classList.add('hoje');
                 if (ehSelecionado) diaElemento.classList.add('selecionado');
+                if (temEventos) diaElemento.classList.add('com-eventos');
 
                 const numeroDia = document.createElement('div');
                 numeroDia.className = 'numero-dia';
                 numeroDia.textContent = data.getDate();
                 diaElemento.appendChild(numeroDia);
 
-                const temEventos = this.temEventosNoDia(data);
                 if (temEventos) {
                     const marcador = document.createElement('div');
                     marcador.className = 'evento-marcador';
@@ -1109,12 +1469,9 @@
                 const fimDia = new Date(data);
                 fimDia.setHours(23, 59, 59, 999);
 
-                return this.agendamentos.some(agendamento => {
-                    if (this.segmentoSelecionado !== "Todos os segmentos" && 
-                        agendamento.segmento !== this.segmentoSelecionado) {
-                        return false;
-                    }
-                    
+                const agendamentosFiltrados = this.filtrarAgendamentos();
+
+                return agendamentosFiltrados.some(agendamento => {
                     const dataAgendamento = new Date(agendamento.dataHora);
                     return dataAgendamento >= inicioDia && dataAgendamento <= fimDia;
                 });
@@ -1143,12 +1500,9 @@
                 const fimDia = new Date(this.dataSelecionada);
                 fimDia.setHours(23, 59, 59, 999);
 
-                const eventosDoDia = this.agendamentos.filter(agendamento => {
-                    if (this.segmentoSelecionado !== "Todos os segmentos" && 
-                        agendamento.segmento !== this.segmentoSelecionado) {
-                        return false;
-                    }
-                    
+                const agendamentosFiltrados = this.filtrarAgendamentos();
+
+                const eventosDoDia = agendamentosFiltrados.filter(agendamento => {
                     const dataAgendamento = new Date(agendamento.dataHora);
                     return dataAgendamento >= inicioDia && dataAgendamento <= fimDia;
                 }).sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
@@ -1157,9 +1511,13 @@
 
                 if (eventosDoDia.length === 0) {
                     estadoVazio.style.display = 'flex';
-                    mensagemVazio.textContent = this.agendamentos.length === 0 ? 
-                        'Selecione uma data para começar' : 
-                        'Nenhuma prova agendada para esta data';
+                    if (this.agendamentos.length === 0) {
+                        mensagemVazio.textContent = 'Nenhum agendamento encontrado';
+                    } else if (this.termoBusca || this.segmentoSelecionado !== "Todos os segmentos") {
+                        mensagemVazio.textContent = 'Nenhum evento encontrado com os filtros aplicados';
+                    } else {
+                        mensagemVazio.textContent = 'Nenhum evento agendado para esta data';
+                    }
                 } else {
                     estadoVazio.style.display = 'none';
                     eventosDoDia.forEach(evento => {
@@ -1205,19 +1563,30 @@
                 this.eventoSelecionado = evento;
                 this.renderizarEventosDoDia();
             }
+
+            // Limpar recursos quando a página for fechada
+            destruir() {
+                if (this.intervaloAtualizacao) {
+                    clearInterval(this.intervaloAtualizacao);
+                }
+            }
         }
 
         // Inicializar quando a página carregar
         document.addEventListener('DOMContentLoaded', () => {
             const currentUser = localStorage.getItem('currentUser');
             if (!currentUser) {
-                // ✅ REDIRECIONAMENTO ABSOLUTO
                 window.location.href = BASE_URL + '/index.html';
                 return;
             }
-            new CalendarioManager();
+            
+            const calendarioManager = new CalendarioManager();
+            
+            // Limpar recursos quando a página for fechada
+            window.addEventListener('beforeunload', () => {
+                calendarioManager.destruir();
+            });
         });
     </script>
 </body>
 </html>
-
