@@ -6,7 +6,9 @@
     <title>Novo Agendamento - Sistema NAP</title>
     <link rel="icon" type="image/png" sizes="32x32" href="logo.png">
     <link rel="icon" type="image/png" sizes="16x16" href="logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href=""logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
+    <!-- MSAL.js para autenticação Microsoft -->
+    <script src="https://alcdn.msauth.net/browser/2.24.0/js/msal-browser.min.js"></script>
     <style>
         /* ===== TEMA ESCOLA - SANTO ANTÔNIO ===== */
         :root {
@@ -76,6 +78,28 @@
 
         .logo:hover {
             transform: scale(1.05);
+        }
+
+        /* Status da Integração */
+        .status-integracao {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--azul-marinho);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .status-integracao.conectado {
+            background: var(--verde);
+        }
+
+        .status-integracao.erro {
+            background: var(--vermelho);
         }
 
         /* ===== LAYOUT PRINCIPAL ===== */
@@ -576,6 +600,11 @@
 </head>
 <body>
     <div class="agendamento-container">
+        <!-- Status da Integração -->
+        <div id="status-integracao" class="status-integracao" style="display: none;">
+            🔄 Conectando...
+        </div>
+
         <!-- Cabeçalho Simplificado -->
         <header class="header">
             <div class="header-background"></div>
@@ -746,414 +775,772 @@
     </div>
 
     <script>
-    // ✅ CONFIGURAÇÃO DE URLS ABSOLUTAS
-    const BASE_URL = 'https://wandersont-silva.github.io/sistema-agendamento-nap';
+        // ✅ CONFIGURAÇÃO DE URLS ABSOLUTAS
+        const BASE_URL = 'https://wandersont-silva.github.io/sistema-agendamento-nap';
+        
+        // ✅ CONFIGURAÇÃO MICROSOFT LIST COM SEUS DADOS
+        const MS_LIST_CONFIG = {
+            siteUrl: 'https://inesacsa-my.sharepoint.com/personal/wandeson_silva_santoantonio_edu_br',
+            listName: 'NAP',
+            clientId: '9b518380-2b14-46d7-8a5a-e5a815b48aac',
+            tenantId: '9d4a2bfa-8172-4b94-bd8a-eafb5cf478cc',
+            redirectUri: `${BASE_URL}/agendamento.html`
+        };
 
-    // Dados e configurações
-    class AgendamentoManager {
-        constructor() {
-            this.agendamentos = [];
-            this.agendamentoSelecionado = null;
-            this.horariosPorSegmento = {
-                'Fundamental 1': [
-                    '07:00', '07:45', '08:30', '09:15', '10:00', '10:45',
-                    '13:00', '13:45', '14:30', '15:15', '16:00'
-                ],
-                'Fundamental 2': [
-                    '07:00', '07:45', '08:30', '09:15', '10:00', '10:45', '11:30',
-                    '13:00', '13:45', '14:30', '15:15', '16:00', '16:45'
-                ],
-                'Ensino Médio': [
-                    '07:00', '07:45', '08:30', '09:15', '10:00', '10:45', '11:30',
-                    '13:00', '13:45', '14:30', '15:15', '16:00', '16:45', '17:30'
-                ]
-            };
-            
-            this.turmasPorSegmento = {
-                'Fundamental 1': ['1º A', '1º B', '1º C', '1º D', '1º E', '2º A', '2º B', '2º C', '2º D', '2º E', '3º A', '3º B', '3º C', '3º D', '3º E', '4º A', '4º B', '4º C', '4º D', '4º E', '5º A', '5º B', '5º C', '5º D','5º E'],
-                'Fundamental 2': ['6º A', '6º B', '6º C', '6º D', '6º E', '7º A', '7º B', '7º C', '7º D', '7º E', '8º A', '8º B', '8º C', '8º D','8º E', '9º A', '9º B', '9º C', '9º D', '9º E'],
-                'Ensino Médio': ['1º A', '1º B', '1º C', '1º D', '1º E', '2º A', '2º B', '2º C', '2º D', '2º E', '3º A', '3º B', '3º C', '3º D', '3º E']
-            };
-            
-            this.init();
-        }
-
-        init() {
-            this.checkAuthentication();
-            this.setupEventListeners();
-            this.setupMenuNavigation();
-            this.carregarAgendamentos();
-            this.configurarValidacoes();
-        }
-
-        checkAuthentication() {
-            const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) {
-                // ✅ REDIRECIONAMENTO ABSOLUTO
-                window.location.href = BASE_URL + '/index.html';
-                return;
+        // ✅ CONFIGURAÇÃO MSAL
+        const msalConfig = {
+            auth: {
+                clientId: MS_LIST_CONFIG.clientId,
+                authority: `https://login.microsoftonline.com/${MS_LIST_CONFIG.tenantId}`,
+                redirectUri: MS_LIST_CONFIG.redirectUri,
+                knownAuthorities: ['login.microsoftonline.com']
+            },
+            cache: {
+                cacheLocation: "localStorage",
+                storeAuthStateInCookie: false
             }
-            this.usuarioLogado = JSON.parse(currentUser);
+        };
+
+        const msalRequest = {
+            scopes: [
+                "https://graph.microsoft.com/Sites.ReadWrite.All",
+                "https://graph.microsoft.com/Files.ReadWrite.All", 
+                "https://graph.microsoft.com/User.Read"
+            ]
+        };
+
+        // ✅ GERENCIADOR DE AUTENTICAÇÃO MSAL
+        class MSALAuthManager {
+            constructor() {
+                this.msalInstance = null;
+                this.account = null;
+                this.isInitialized = false;
+            }
+
+            async initialize() {
+                if (this.isInitialized) return;
+                
+                try {
+                    this.msalInstance = new msal.PublicClientApplication(msalConfig);
+                    await this.msalInstance.initialize();
+                    
+                    const response = await this.msalInstance.handleRedirectPromise();
+                    if (response) {
+                        this.account = response.account;
+                        console.log('✅ Login via redirect realizado:', this.account);
+                    } else {
+                        const accounts = this.msalInstance.getAllAccounts();
+                        if (accounts.length > 0) {
+                            this.account = accounts[0];
+                            console.log('✅ Conta encontrada no cache:', this.account);
+                        }
+                    }
+                    
+                    this.isInitialized = true;
+                } catch (error) {
+                    console.error('❌ Erro ao inicializar MSAL:', error);
+                }
+            }
+
+            async getAccessToken() {
+                if (!this.isInitialized) {
+                    await this.initialize();
+                }
+
+                if (!this.account) {
+                    await this.login();
+                    return null;
+                }
+
+                try {
+                    const silentRequest = {
+                        scopes: msalRequest.scopes,
+                        account: this.account,
+                        forceRefresh: false
+                    };
+
+                    const response = await this.msalInstance.acquireTokenSilent(silentRequest);
+                    console.log('✅ Token adquirido silenciosamente');
+                    return response.accessToken;
+
+                } catch (silentError) {
+                    console.warn('Falha no token silencioso:', silentError);
+                    
+                    try {
+                        const response = await this.msalInstance.acquireTokenPopup(msalRequest);
+                        this.account = response.account;
+                        return response.accessToken;
+                    } catch (popupError) {
+                        console.error('Erro no popup:', popupError);
+                        throw new Error('Falha na aquisição do token');
+                    }
+                }
+            }
+
+            async login() {
+                if (!this.isInitialized) {
+                    await this.initialize();
+                }
+
+                try {
+                    const loginRequest = {
+                        scopes: msalRequest.scopes,
+                        prompt: "select_account"
+                    };
+                    
+                    const response = await this.msalInstance.loginPopup(loginRequest);
+                    this.account = response.account;
+                    console.log('✅ Login realizado via popup');
+                    return response;
+                    
+                } catch (error) {
+                    console.error('❌ Erro no login:', error);
+                    throw error;
+                }
+            }
+
+            isAuthenticated() {
+                return this.account !== null;
+            }
         }
 
-        setupEventListeners() {
-            // Navegação do menu
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const menuId = parseInt(item.getAttribute('data-menu'));
-                    this.navigateToMenu(menuId);
+        // ✅ GERENCIADOR PRINCIPAL DE AGENDAMENTOS
+        class AgendamentoManager {
+            constructor() {
+                this.authManager = new MSALAuthManager();
+                this.agendamentos = [];
+                this.agendamentoSelecionado = null;
+                this.horariosPorSegmento = {
+                    'Fundamental 1': [
+                        '07:00', '07:45', '08:30', '09:15', '10:00', '10:45',
+                        '13:00', '13:45', '14:30', '15:15', '16:00'
+                    ],
+                    'Fundamental 2': [
+                        '07:00', '07:45', '08:30', '09:15', '10:00', '10:45', '11:30',
+                        '13:00', '13:45', '14:30', '15:15', '16:00', '16:45'
+                    ],
+                    'Ensino Médio': [
+                        '07:00', '07:45', '08:30', '09:15', '10:00', '10:45', '11:30',
+                        '13:00', '13:45', '14:30', '15:15', '16:00', '16:45', '17:30'
+                    ]
+                };
+                
+                this.turmasPorSegmento = {
+                    'Fundamental 1': ['1º A', '1º B', '1º C', '1º D', '1º E', '2º A', '2º B', '2º C', '2º D', '2º E', '3º A', '3º B', '3º C', '3º D', '3º E', '4º A', '4º B', '4º C', '4º D', '4º E', '5º A', '5º B', '5º C', '5º D','5º E'],
+                    'Fundamental 2': ['6º A', '6º B', '6º C', '6º D', '6º E', '7º A', '7º B', '7º C', '7º D', '7º E', '8º A', '8º B', '8º C', '8º D','8º E', '9º A', '9º B', '9º C', '9º D', '9º E'],
+                    'Ensino Médio': ['1º A', '1º B', '1º C', '1º D', '1º E', '2º A', '2º B', '2º C', '2º D', '2º E', '3º A', '3º B', '3º C', '3º D', '3º E']
+                };
+                
+                this.init();
+            }
+
+            async init() {
+                await this.authManager.initialize();
+                this.checkAuthentication();
+                this.setupEventListeners();
+                this.setupMenuNavigation();
+                await this.carregarAgendamentos();
+                this.configurarValidacoes();
+                await this.testarIntegracaoMicrosoftList();
+            }
+
+            checkAuthentication() {
+                const currentUser = localStorage.getItem('currentUser');
+                if (!currentUser) {
+                    window.location.href = BASE_URL + '/index.html';
+                    return;
+                }
+                this.usuarioLogado = JSON.parse(currentUser);
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const menuId = parseInt(item.getAttribute('data-menu'));
+                        this.navigateToMenu(menuId);
+                    });
                 });
-            });
 
-            // Formulário
-            document.getElementById('segmento').addEventListener('change', (e) => {
-                this.atualizarTurmas(e.target.value);
-                this.atualizarHorarios(e.target.value);
-                this.validarFormulario();
-            });
-
-            document.getElementById('data').addEventListener('change', (e) => {
-                this.validarData(e.target.value);
-                this.validarFormulario();
-            });
-
-            // Campos do formulário
-            const campos = ['disciplina', 'turma', 'hora', 'observacoes'];
-            campos.forEach(campo => {
-                document.getElementById(campo).addEventListener('change', () => {
+                document.getElementById('segmento').addEventListener('change', (e) => {
+                    this.atualizarTurmas(e.target.value);
+                    this.atualizarHorarios(e.target.value);
                     this.validarFormulario();
                 });
-            });
 
-            // Botões
-            document.getElementById('btn-agendar').addEventListener('click', () => {
-                this.submeterAgendamento();
-            });
+                document.getElementById('data').addEventListener('change', (e) => {
+                    this.validarData(e.target.value);
+                    this.validarFormulario();
+                });
 
-            document.getElementById('btn-limpar').addEventListener('click', () => {
-                this.limparFormulario();
-            });
+                const campos = ['disciplina', 'turma', 'hora', 'observacoes'];
+                campos.forEach(campo => {
+                    document.getElementById(campo).addEventListener('change', () => {
+                        this.validarFormulario();
+                    });
+                });
 
-            document.getElementById('btn-excluir').addEventListener('click', () => {
-                this.excluirAgendamento();
-            });
+                document.getElementById('btn-agendar').addEventListener('click', () => {
+                    this.submeterAgendamento();
+                });
 
-            document.getElementById('btn-modal-ok').addEventListener('click', () => {
-                this.fecharModal();
-            });
-        }
+                document.getElementById('btn-limpar').addEventListener('click', () => {
+                    this.limparFormulario();
+                });
 
-        setupMenuNavigation() {
-            // Remove active de todos os itens
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Adiciona active ao item atual
-            const currentMenu = document.querySelector('[data-menu="2"]');
-            if (currentMenu) {
-                currentMenu.classList.add('active');
-            }
-        }
+                document.getElementById('btn-excluir').addEventListener('click', () => {
+                    this.excluirAgendamento();
+                });
 
-        navigateToMenu(menuId) {
-            // ✅ NAVEGAÇÃO COM URLS ABSOLUTAS
-            switch(menuId) {
-                case 1: // Dashboard
-                    window.location.href = BASE_URL + '/dashboard.html';
-                    break;
-                case 2: // Agendamento (já estamos aqui)
-                    break;
-                case 3: // Suporte
-                    window.location.href = BASE_URL + '/suporte.html';
-                    break;
-                case 4: // Calendário
-                    window.location.href = BASE_URL + '/calendario.html';
-                    break;
-                case 5: // Busca
-                    window.location.href = BASE_URL + '/busca.html';
-                    break;
-            }
-        }
-
-        // ... (o resto dos métodos permanece igual - são funcionais)
-        atualizarTurmas(segmento) {
-            const selectTurma = document.getElementById('turma');
-            selectTurma.innerHTML = '<option value="">Selecione a turma</option>';
-            
-            if (segmento && this.turmasPorSegmento[segmento]) {
-                this.turmasPorSegmento[segmento].forEach(turma => {
-                    const option = document.createElement('option');
-                    option.value = turma;
-                    option.textContent = turma;
-                    selectTurma.appendChild(option);
+                document.getElementById('btn-modal-ok').addEventListener('click', () => {
+                    this.fecharModal();
                 });
             }
-        }
 
-        atualizarHorarios(segmento) {
-            const selectHora = document.getElementById('hora');
-            selectHora.innerHTML = '<option value="">Selecione o horário</option>';
-            selectHora.disabled = !segmento;
-            
-            if (segmento && this.horariosPorSegmento[segmento]) {
-                this.horariosPorSegmento[segmento].forEach(horario => {
-                    const option = document.createElement('option');
-                    option.value = horario;
-                    option.textContent = horario;
-                    selectHora.appendChild(option);
-                });
-            }
-        }
-
-        validarData(data) {
-            const dataSelecionada = new Date(data);
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            
-            if (dataSelecionada <= hoje) {
-                alert('Não é permitido selecionar a data de hoje ou datas passadas. Por favor, escolha uma data futura.');
-                document.getElementById('data').value = '';
-                return false;
-            }
-            return true;
-        }
-
-        validarFormulario() {
-            const disciplina = document.getElementById('disciplina').value;
-            const segmento = document.getElementById('segmento').value;
-            const turma = document.getElementById('turma').value;
-            const data = document.getElementById('data').value;
-            const hora = document.getElementById('hora').value;
-            const observacoes = document.getElementById('observacoes').value;
-            
-            const formValido = disciplina && segmento && turma && data && hora && observacoes;
-            
-            document.getElementById('btn-agendar').disabled = !formValido;
-            
-            return formValido;
-        }
-
-        carregarAgendamentos() {
-            const agendamentosSalvos = localStorage.getItem(`agendamentos_${this.usuarioLogado.email}`);
-            this.agendamentos = agendamentosSalvos ? JSON.parse(agendamentosSalvos) : [];
-            
-            this.renderizarAgendamentos();
-        }
-
-        renderizarAgendamentos() {
-            const gallery = document.getElementById('gallery-agendamentos');
-            gallery.innerHTML = '';
-
-            if (this.agendamentos.length === 0) {
-                gallery.innerHTML = '<p class="sem-agendamentos">Nenhum agendamento encontrado</p>';
-                return;
-            }
-
-            this.agendamentos.forEach((agendamento, index) => {
-                const item = document.createElement('div');
-                item.className = `agendamento-item ${this.agendamentoSelecionado === index ? 'selected' : ''}`;
-                item.innerHTML = `
-                    <div class="agendamento-disciplina">${agendamento.disciplina}</div>
-                    <div class="agendamento-segmento">${agendamento.segmento} - ${agendamento.turma}</div>
-                    <div class="agendamento-data">${this.formatarDataHora(agendamento.dataHora)}</div>
-                    <div class="agendamento-observacoes">Observações: ${agendamento.observacoes}</div>
-                `;
-                
-                item.addEventListener('click', () => {
-                    this.selecionarAgendamento(index);
+            setupMenuNavigation() {
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    item.classList.remove('active');
                 });
                 
-                gallery.appendChild(item);
-            });
-        }
-
-        selecionarAgendamento(index) {
-            this.agendamentoSelecionado = index;
-            this.renderizarAgendamentos();
-            
-            const label = document.getElementById('selected-label');
-            const btnExcluir = document.getElementById('btn-excluir');
-            
-            if (this.agendamentoSelecionado !== null) {
-                label.textContent = 'Agendamento selecionado';
-                btnExcluir.disabled = false;
-            } else {
-                label.textContent = 'Nada selecionado';
-                btnExcluir.disabled = true;
-            }
-        }
-
-        async submeterAgendamento() {
-            if (!this.validarFormulario()) {
-                alert('Por favor, preencha todos os campos obrigatórios.');
-                return;
+                const currentMenu = document.querySelector('[data-menu="2"]');
+                if (currentMenu) {
+                    currentMenu.classList.add('active');
+                }
             }
 
-            const btnAgendar = document.getElementById('btn-agendar');
-            const btnText = document.getElementById('btn-text');
-            const btnLoader = document.getElementById('btn-loader');
+            navigateToMenu(menuId) {
+                switch(menuId) {
+                    case 1:
+                        window.location.href = BASE_URL + '/dashboard.html';
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        window.location.href = BASE_URL + '/suporte.html';
+                        break;
+                    case 4:
+                        window.location.href = BASE_URL + '/calendario.html';
+                        break;
+                    case 5:
+                        window.location.href = BASE_URL + '/busca.html';
+                        break;
+                }
+            }
 
-            // Mostrar loading
-            btnText.textContent = 'ENVIANDO...';
-            btnLoader.style.display = 'block';
-            btnAgendar.disabled = true;
+            // ✅ MÉTODOS DE INTEGRAÇÃO MICROSOFT LIST
+            async testarIntegracaoMicrosoftList() {
+                try {
+                    this.mostrarStatusIntegracao('🔄 Conectando com Microsoft List...');
+                    
+                    const token = await this.authManager.getAccessToken();
+                    if (!token) {
+                        this.mostrarStatusIntegracao('⚠️ Faça login na Microsoft', 'erro');
+                        return;
+                    }
 
-            try {
-                const disponivel = await this.verificarDisponibilidade();
+                    const sitePath = this.extrairSitePath(MS_LIST_CONFIG.siteUrl);
+                    const response = await fetch(
+                        `https://graph.microsoft.com/v1.0/sites/${sitePath}/lists/${MS_LIST_CONFIG.listName}`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        MS_LIST_CONFIG.listId = data.id;
+                        this.mostrarStatusIntegracao('✅ Conectado à Microsoft List', 'conectado');
+                        console.log('✅ List ID encontrado:', data.id);
+                    } else {
+                        this.mostrarStatusIntegracao('❌ Lista não encontrada', 'erro');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Erro na integração:', error);
+                    this.mostrarStatusIntegracao('❌ Erro na conexão', 'erro');
+                }
+            }
+
+            mostrarStatusIntegracao(mensagem, tipo = '') {
+                const statusElement = document.getElementById('status-integracao');
+                if (statusElement) {
+                    statusElement.textContent = mensagem;
+                    statusElement.className = `status-integracao ${tipo}`;
+                    statusElement.style.display = 'block';
+                }
+            }
+
+            extrairSitePath(siteUrl) {
+                const url = new URL(siteUrl);
+                return `${url.hostname}:${url.pathname}`;
+            }
+
+            async carregarAgendamentos() {
+                try {
+                    const token = await this.authManager.getAccessToken();
+                    let agendamentosDaList = null;
+
+                    if (token) {
+                        agendamentosDaList = await this.carregarDaMicrosoftList(token);
+                    }
+
+                    if (agendamentosDaList && agendamentosDaList.length > 0) {
+                        this.agendamentos = agendamentosDaList;
+                        console.log('✅ Agendamentos carregados da Microsoft List');
+                    } else {
+                        await this.carregarAgendamentosLocal();
+                    }
+                    
+                    this.renderizarAgendamentos();
+                } catch (error) {
+                    console.error('Erro ao carregar agendamentos:', error);
+                    await this.carregarAgendamentosLocal();
+                    this.renderizarAgendamentos();
+                }
+            }
+
+            async carregarDaMicrosoftList(token) {
+                try {
+                    const sitePath = this.extrairSitePath(MS_LIST_CONFIG.siteUrl);
+                    
+                    const response = await fetch(
+                        `https://graph.microsoft.com/v1.0/sites/${sitePath}/lists/${MS_LIST_CONFIG.listName}/items?expand=fields&$top=1000`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    return data.value.map(item => ({
+                        id: item.id,
+                        microsoftId: item.id,
+                        disciplina: item.fields.Disciplina,
+                        segmento: item.fields.Segmento,
+                        turma: item.fields.Turma,
+                        dataHora: item.fields.Time,
+                        observacoes: item.fields.Observacoes,
+                        usuario: item.fields.User,
+                        dataCriacao: item.fields.Criado
+                    }));
+
+                } catch (error) {
+                    console.warn('Não foi possível carregar da Microsoft List:', error);
+                    return null;
+                }
+            }
+
+            async salvarNaMicrosoftList(agendamento, token) {
+                try {
+                    const sitePath = this.extrairSitePath(MS_LIST_CONFIG.siteUrl);
+                    
+                    const payload = {
+                        fields: {
+                            Title: `Agendamento - ${agendamento.disciplina} - ${agendamento.turma}`,
+                            Disciplina: agendamento.disciplina,
+                            Segmento: agendamento.segmento,
+                            Turma: agendamento.turma,
+                            Time: agendamento.dataHora,
+                            Observacoes: agendamento.observacoes,
+                            User: agendamento.usuario
+                        }
+                    };
+
+                    console.log('📤 Enviando para Microsoft List:', payload);
+
+                    const response = await fetch(
+                        `https://graph.microsoft.com/v1.0/sites/${sitePath}/lists/${MS_LIST_CONFIG.listName}/items`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        }
+                    );
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Erro HTTP: ${response.status} - ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('✅ Salvo com sucesso na List:', data);
+                    
+                    return {
+                        id: data.id,
+                        microsoftId: data.id
+                    };
+
+                } catch (error) {
+                    console.error('Erro ao salvar na Microsoft List:', error);
+                    throw error;
+                }
+            }
+
+            async excluirDaMicrosoftList(microsoftId) {
+                try {
+                    const token = await this.authManager.getAccessToken();
+                    const sitePath = this.extrairSitePath(MS_LIST_CONFIG.siteUrl);
+                    
+                    const response = await fetch(
+                        `https://graph.microsoft.com/v1.0/sites/${sitePath}/lists/${MS_LIST_CONFIG.listName}/items/${microsoftId}`,
+                        {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        }
+                    );
+
+                    if (!response.ok && response.status !== 404) {
+                        throw new Error(`Erro HTTP: ${response.status}`);
+                    }
+
+                    return true;
+
+                } catch (error) {
+                    console.error('Erro ao excluir da Microsoft List:', error);
+                    throw error;
+                }
+            }
+
+            async verificarDisponibilidadeMicrosoftList() {
+                try {
+                    const segmento = document.getElementById('segmento').value;
+                    const data = document.getElementById('data').value;
+                    const hora = document.getElementById('hora').value;
+                    
+                    const dataHoraSelecionada = new Date(`${data}T${hora}:00`);
+                    
+                    const token = await this.authManager.getAccessToken();
+                    const todosAgendamentos = await this.carregarDaMicrosoftList(token);
+                    
+                    if (!todosAgendamentos) {
+                        return this.verificarDisponibilidadeLocal();
+                    }
+                    
+                    const agendamentosNoMesmoHorario = todosAgendamentos.filter(ag => {
+                        if (!ag.dataHora) return false;
+                        
+                        const agDataHora = new Date(ag.dataHora);
+                        return ag.segmento === segmento && 
+                               agDataHora.getTime() === dataHoraSelecionada.getTime();
+                    });
+                    
+                    console.log(`📊 Verificação: ${agendamentosNoMesmoHorario.length}/2 agendamentos no horário`);
+                    
+                    return agendamentosNoMesmoHorario.length < 2;
+
+                } catch (error) {
+                    console.warn('Erro ao verificar disponibilidade na List:', error);
+                    return this.verificarDisponibilidadeLocal();
+                }
+            }
+
+            // ✅ MÉTODOS LOCAIS (FALLBACK)
+            async carregarAgendamentosLocal() {
+                const agendamentosSalvos = localStorage.getItem(`agendamentos_${this.usuarioLogado.email}`);
+                this.agendamentos = agendamentosSalvos ? JSON.parse(agendamentosSalvos) : [];
+            }
+
+            salvarAgendamentosLocal() {
+                localStorage.setItem(`agendamentos_${this.usuarioLogado.email}`, JSON.stringify(this.agendamentos));
+            }
+
+            verificarDisponibilidadeLocal() {
+                const segmento = document.getElementById('segmento').value;
+                const data = document.getElementById('data').value;
+                const hora = document.getElementById('hora').value;
                 
-                if (!disponivel) {
-                    alert('Já existem 2 agendamentos para este período e segmento. Escolha outro horário.');
+                const dataHoraSelecionada = new Date(`${data}T${hora}:00`);
+                const agendamentosNoMesmoHorario = this.agendamentos.filter(ag => {
+                    const agDataHora = new Date(ag.dataHora);
+                    return ag.segmento === segmento && 
+                           agDataHora.getTime() === dataHoraSelecionada.getTime();
+                });
+                
+                return agendamentosNoMesmoHorario.length < 2;
+            }
+
+            // ✅ MÉTODOS EXISTENTES (ATUALIZADOS)
+            async submeterAgendamento() {
+                if (!this.validarFormulario()) {
+                    alert('Por favor, preencha todos os campos obrigatórios.');
                     return;
                 }
 
-                const novoAgendamento = this.criarAgendamento();
-                this.agendamentos.push(novoAgendamento);
+                const btnAgendar = document.getElementById('btn-agendar');
+                const btnText = document.getElementById('btn-text');
+                const btnLoader = document.getElementById('btn-loader');
+
+                btnText.textContent = 'ENVIANDO...';
+                btnLoader.style.display = 'block';
+                btnAgendar.disabled = true;
+
+                try {
+                    const disponivel = await this.verificarDisponibilidadeMicrosoftList();
+                    
+                    if (!disponivel) {
+                        alert('Já existem 2 agendamentos para este período e segmento. Escolha outro horário.');
+                        return;
+                    }
+
+                    const novoAgendamento = this.criarAgendamento();
+                    const token = await this.authManager.getAccessToken();
+                    
+                    if (token) {
+                        const agendamentoSalvo = await this.salvarNaMicrosoftList(novoAgendamento, token);
+                        if (agendamentoSalvo) {
+                            novoAgendamento.id = agendamentoSalvo.id;
+                            novoAgendamento.microsoftId = agendamentoSalvo.microsoftId;
+                        }
+                    }
+                    
+                    this.agendamentos.push(novoAgendamento);
+                    this.salvarAgendamentosLocal();
+                    await this.enviarEmailConfirmacao(novoAgendamento);
+                    this.mostrarModalConfirmacao();
+                    this.limparFormulario();
+                    this.renderizarAgendamentos();
+                    
+                } catch (error) {
+                    console.error('Erro ao agendar:', error);
+                    alert('Erro ao realizar agendamento. Tente novamente.');
+                } finally {
+                    btnText.textContent = 'AGENDAR';
+                    btnLoader.style.display = 'none';
+                    this.validarFormulario();
+                }
+            }
+
+            async excluirAgendamento() {
+                if (this.agendamentoSelecionado === null) {
+                    alert('Nenhum agendamento selecionado para excluir.');
+                    return;
+                }
+
+                if (!confirm('Tem certeza que deseja excluir este agendamento?')) {
+                    return;
+                }
+
+                const agendamento = this.agendamentos[this.agendamentoSelecionado];
                 
-                this.salvarAgendamentos();
-                await this.enviarEmailConfirmacao(novoAgendamento);
-                this.mostrarModalConfirmacao();
-                this.limparFormulario();
+                try {
+                    if (agendamento.microsoftId) {
+                        await this.excluirDaMicrosoftList(agendamento.microsoftId);
+                    }
+                    
+                    this.agendamentos.splice(this.agendamentoSelecionado, 1);
+                    this.agendamentoSelecionado = null;
+                    
+                    this.salvarAgendamentosLocal();
+                    this.renderizarAgendamentos();
+                    
+                    const label = document.getElementById('selected-label');
+                    const btnExcluir = document.getElementById('btn-excluir');
+                    
+                    label.textContent = 'Nada selecionado';
+                    btnExcluir.disabled = true;
+                    
+                    alert('Agendamento excluído com sucesso!');
+                    
+                } catch (error) {
+                    console.error('Erro ao excluir:', error);
+                    alert('Erro ao excluir agendamento. Tente novamente.');
+                }
+            }
+
+            // ... (outros métodos permanecem iguais)
+            atualizarTurmas(segmento) {
+                const selectTurma = document.getElementById('turma');
+                selectTurma.innerHTML = '<option value="">Selecione a turma</option>';
+                
+                if (segmento && this.turmasPorSegmento[segmento]) {
+                    this.turmasPorSegmento[segmento].forEach(turma => {
+                        const option = document.createElement('option');
+                        option.value = turma;
+                        option.textContent = turma;
+                        selectTurma.appendChild(option);
+                    });
+                }
+            }
+
+            atualizarHorarios(segmento) {
+                const selectHora = document.getElementById('hora');
+                selectHora.innerHTML = '<option value="">Selecione o horário</option>';
+                selectHora.disabled = !segmento;
+                
+                if (segmento && this.horariosPorSegmento[segmento]) {
+                    this.horariosPorSegmento[segmento].forEach(horario => {
+                        const option = document.createElement('option');
+                        option.value = horario;
+                        option.textContent = horario;
+                        selectHora.appendChild(option);
+                    });
+                }
+            }
+
+            validarData(data) {
+                const dataSelecionada = new Date(data);
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+                
+                if (dataSelecionada <= hoje) {
+                    alert('Não é permitido selecionar a data de hoje ou datas passadas. Por favor, escolha uma data futura.');
+                    document.getElementById('data').value = '';
+                    return false;
+                }
+                return true;
+            }
+
+            validarFormulario() {
+                const disciplina = document.getElementById('disciplina').value;
+                const segmento = document.getElementById('segmento').value;
+                const turma = document.getElementById('turma').value;
+                const data = document.getElementById('data').value;
+                const hora = document.getElementById('hora').value;
+                const observacoes = document.getElementById('observacoes').value;
+                
+                const formValido = disciplina && segmento && turma && data && hora && observacoes;
+                
+                document.getElementById('btn-agendar').disabled = !formValido;
+                
+                return formValido;
+            }
+
+            renderizarAgendamentos() {
+                const gallery = document.getElementById('gallery-agendamentos');
+                gallery.innerHTML = '';
+
+                if (this.agendamentos.length === 0) {
+                    gallery.innerHTML = '<p class="sem-agendamentos">Nenhum agendamento encontrado</p>';
+                    return;
+                }
+
+                this.agendamentos.forEach((agendamento, index) => {
+                    const item = document.createElement('div');
+                    item.className = `agendamento-item ${this.agendamentoSelecionado === index ? 'selected' : ''}`;
+                    item.innerHTML = `
+                        <div class="agendamento-disciplina">${agendamento.disciplina}</div>
+                        <div class="agendamento-segmento">${agendamento.segmento} - ${agendamento.turma}</div>
+                        <div class="agendamento-data">${this.formatarDataHora(agendamento.dataHora)}</div>
+                        <div class="agendamento-observacoes">Observações: ${agendamento.observacoes}</div>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        this.selecionarAgendamento(index);
+                    });
+                    
+                    gallery.appendChild(item);
+                });
+            }
+
+            selecionarAgendamento(index) {
+                this.agendamentoSelecionado = index;
                 this.renderizarAgendamentos();
                 
-            } catch (error) {
-                console.error('Erro ao agendar:', error);
-                alert('Erro ao realizar agendamento. Tente novamente.');
-            } finally {
-                btnText.textContent = 'AGENDAR';
-                btnLoader.style.display = 'none';
+                const label = document.getElementById('selected-label');
+                const btnExcluir = document.getElementById('btn-excluir');
+                
+                if (this.agendamentoSelecionado !== null) {
+                    label.textContent = 'Agendamento selecionado';
+                    btnExcluir.disabled = false;
+                } else {
+                    label.textContent = 'Nada selecionado';
+                    btnExcluir.disabled = true;
+                }
+            }
+
+            criarAgendamento() {
+                const disciplina = document.getElementById('disciplina').value;
+                const segmento = document.getElementById('segmento').value;
+                const turma = document.getElementById('turma').value;
+                const data = document.getElementById('data').value;
+                const hora = document.getElementById('hora').value;
+                const observacoes = document.getElementById('observacoes').value;
+
+                const [horas, minutos] = hora.split(':');
+                const dataHora = new Date(data);
+                dataHora.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+
+                return {
+                    id: this.gerarId(),
+                    disciplina: disciplina,
+                    segmento: segmento,
+                    turma: turma,
+                    dataHora: dataHora.toISOString(),
+                    observacoes: observacoes,
+                    usuario: this.usuarioLogado.email,
+                    dataCriacao: new Date().toISOString()
+                };
+            }
+
+            async enviarEmailConfirmacao(agendamento) {
+                console.log('Enviando email de confirmação...', agendamento);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log('Email enviado com sucesso para:', this.usuarioLogado.email);
+                return true;
+            }
+
+            limparFormulario() {
+                document.getElementById('form-agendamento').reset();
+                document.getElementById('hora').disabled = true;
+                document.getElementById('hora').innerHTML = '<option value="">Selecione o horário</option>';
+                document.getElementById('turma').innerHTML = '<option value="">Selecione a turma</option>';
                 this.validarFormulario();
             }
-        }
 
-        criarAgendamento() {
-            const disciplina = document.getElementById('disciplina').value;
-            const segmento = document.getElementById('segmento').value;
-            const turma = document.getElementById('turma').value;
-            const data = document.getElementById('data').value;
-            const hora = document.getElementById('hora').value;
-            const observacoes = document.getElementById('observacoes').value;
-
-            const [horas, minutos] = hora.split(':');
-            const dataHora = new Date(data);
-            dataHora.setHours(parseInt(horas), parseInt(minutos), 0, 0);
-
-            return {
-                id: this.gerarId(),
-                disciplina: disciplina,
-                segmento: segmento,
-                turma: turma,
-                dataHora: dataHora.toISOString(),
-                observacoes: observacoes,
-                usuario: this.usuarioLogado.email,
-                dataCriacao: new Date().toISOString()
-            };
-        }
-
-        async verificarDisponibilidade() {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            const segmento = document.getElementById('segmento').value;
-            const data = document.getElementById('data').value;
-            const hora = document.getElementById('hora').value;
-            
-            const dataHoraSelecionada = new Date(`${data}T${hora}:00`);
-            const agendamentosNoMesmoHorario = this.agendamentos.filter(ag => {
-                const agDataHora = new Date(ag.dataHora);
-                return ag.segmento === segmento && 
-                       agDataHora.getTime() === dataHoraSelecionada.getTime();
-            });
-            
-            return agendamentosNoMesmoHorario.length < 2;
-        }
-
-        async enviarEmailConfirmacao(agendamento) {
-            console.log('Enviando email de confirmação...', agendamento);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log('Email enviado com sucesso para:', this.usuarioLogado.email);
-            return true;
-        }
-
-        excluirAgendamento() {
-            if (this.agendamentoSelecionado === null) {
-                alert('Nenhum agendamento selecionado para excluir.');
-                return;
+            mostrarModalConfirmacao() {
+                document.getElementById('modal-confirmacao').style.display = 'flex';
             }
 
-            if (!confirm('Tem certeza que deseja excluir este agendamento?')) {
-                return;
+            fecharModal() {
+                document.getElementById('modal-confirmacao').style.display = 'none';
             }
 
-            this.agendamentos.splice(this.agendamentoSelecionado, 1);
-            this.agendamentoSelecionado = null;
-            
-            this.salvarAgendamentos();
-            this.renderizarAgendamentos();
-            
-            const label = document.getElementById('selected-label');
-            const btnExcluir = document.getElementById('btn-excluir');
-            
-            label.textContent = 'Nada selecionado';
-            btnExcluir.disabled = true;
-            
-            alert('Agendamento excluído com sucesso!');
+            gerarId() {
+                return 'agendamento_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            formatarDataHora(dataHoraISO) {
+                const data = new Date(dataHoraISO);
+                return data.toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            configurarValidacoes() {
+                const amanha = new Date();
+                amanha.setDate(amanha.getDate() + 1);
+                const dataInput = document.getElementById('data');
+                dataInput.min = amanha.toISOString().split('T')[0];
+            }
         }
 
-        limparFormulario() {
-            document.getElementById('form-agendamento').reset();
-            document.getElementById('hora').disabled = true;
-            document.getElementById('hora').innerHTML = '<option value="">Selecione o horário</option>';
-            document.getElementById('turma').innerHTML = '<option value="">Selecione a turma</option>';
-            this.validarFormulario();
-        }
-
-        mostrarModalConfirmacao() {
-            document.getElementById('modal-confirmacao').style.display = 'flex';
-        }
-
-        fecharModal() {
-            document.getElementById('modal-confirmacao').style.display = 'none';
-        }
-
-        salvarAgendamentos() {
-            localStorage.setItem(`agendamentos_${this.usuarioLogado.email}`, JSON.stringify(this.agendamentos));
-        }
-
-        gerarId() {
-            return 'agendamento_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        }
-
-        formatarDataHora(dataHoraISO) {
-            const data = new Date(dataHoraISO);
-            return data.toLocaleString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        configurarValidacoes() {
-            const amanha = new Date();
-            amanha.setDate(amanha.getDate() + 1);
-            const dataInput = document.getElementById('data');
-            dataInput.min = amanha.toISOString().split('T')[0];
-        }
-    }
-
-    // Inicializar quando a página carregar
-    document.addEventListener('DOMContentLoaded', () => {
-        const currentUser = localStorage.getItem('currentUser');
-        if (!currentUser) {
-            window.location.href = BASE_URL + '/index.html';
-            return;
-        }
-        new AgendamentoManager();
-    });
-</script>
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) {
+                window.location.href = BASE_URL + '/index.html';
+                return;
+            }
+            new AgendamentoManager();
+        });
+    </script>
 </body>
 </html>
-
-
-
