@@ -360,6 +360,11 @@
             margin-right: 8px;
         }
 
+        .outras-needs-container {
+            margin-top: 10px;
+            display: none;
+        }
+
         .file-upload-area {
             border: 2px dashed var(--cinza-medio);
             border-radius: 10px;
@@ -368,6 +373,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             background: var(--cinza-claro);
+            margin-top: 20px;
         }
 
         .file-upload-area:hover {
@@ -570,12 +576,12 @@
             <!-- Menu Lateral SEM Logo -->
             <nav class="sidebar">
                 <ul class="menu-nav">
-                    <li class="menu-item active" data-menu="1">
+                    <li class="menu-item" data-menu="1">
                         <span class="menu-icon">🏠</span>
                         <span class="menu-text">Início</span>
                         <span class="menu-tooltip">Página inicial</span>
                     </li>
-                    <li class="menu-item" data-menu="2">
+                    <li class="menu-item active" data-menu="2">
                         <span class="menu-icon">📝</span>
                         <span class="menu-text">Adaptar</span>
                         <span class="menu-tooltip">Adaptar prova</span>
@@ -610,10 +616,6 @@
                         <div class="form-container">
                             <div class="form-section">
                                 <h3>Informações da Prova</h3>
-                                <div class="form-group">
-                                    <label for="provaNome">Nome da Prova</label>
-                                    <input type="text" id="provaNome" class="form-control" placeholder="Ex: Prova de Matemática - 1º Bimestre">
-                                </div>
                                 <div class="form-group">
                                     <label for="provaDisciplina">Disciplina</label>
                                     <input type="text" id="provaDisciplina" class="form-control" placeholder="Ex: Matemática, Português, Ciências...">
@@ -652,6 +654,12 @@
                                         <label for="adaptOutros">Outras Necessidades</label>
                                     </div>
                                 </div>
+                                <div class="outras-needs-container" id="outrasNeedsContainer">
+                                    <div class="form-group">
+                                        <label for="outrasNeeds">Especifique as outras necessidades:</label>
+                                        <input type="text" id="outrasNeeds" class="form-control" placeholder="Descreva as necessidades específicas...">
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-section">
@@ -659,7 +667,6 @@
                                 <div class="file-upload-area" id="fileUploadArea">
                                     <div class="file-icon">📄</div>
                                     <p>Arraste e solte o arquivo da prova aqui</p>
-                                    <p>ou</p>
                                     <button class="btn-escola" id="selectFileBtn">Selecionar Arquivo</button>
                                     <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" style="display: none;">
                                     <div class="file-name" id="fileName"></div>
@@ -697,33 +704,18 @@
     </div>
 
     <script>
-        // URLS ABSOLUTAS
-        const BASE_URL = 'https://wandersont-silva.github.io/sistema-agendamento-nap';
-
         // Gerenciamento do estado da aplicação
         class DashboardManager {
             constructor() {
-                this.currentMenu = 1;
+                this.currentMenu = 2; // Inicia na tela de Adaptar
                 this.init();
             }
 
             init() {
-                this.checkAuthentication();
                 this.setupMenuNavigation();
                 this.setupFileUpload();
                 this.setupAdaptationProcess();
-            }
-
-            checkAuthentication() {
-                const currentUser = localStorage.getItem('currentUser');
-                if (!currentUser) {
-                    // REDIRECIONAMENTO ABSOLUTO
-                    window.location.href = BASE_URL + '/index.html';
-                    return;
-                }
-                
-                const user = JSON.parse(currentUser);
-                console.log('Usuário logado:', user.name);
+                this.setupOutrasNecessidades();
             }
 
             setupMenuNavigation() {
@@ -751,24 +743,6 @@
                 }
                 
                 this.currentMenu = menuId;
-                
-                // NAVEGAÇÃO COM URLS ABSOLUTAS
-                switch(menuId) {
-                    case 1: // Dashboard (já estamos aqui)
-                        break;
-                    case 2: // Adaptar
-                        // Já estamos na página de adaptação
-                        break;
-                    case 3: // Histórico
-                        window.location.href = BASE_URL + '/historico.html';
-                        break;
-                    case 4: // Alunos
-                        window.location.href = BASE_URL + '/alunos.html';
-                        break;
-                    case 5: // Configurações
-                        window.location.href = BASE_URL + '/configuracoes.html';
-                        break;
-                }
             }
 
             setupFileUpload() {
@@ -819,6 +793,19 @@
                 });
             }
 
+            setupOutrasNecessidades() {
+                const outrasCheckbox = document.getElementById('adaptOutros');
+                const outrasContainer = document.getElementById('outrasNeedsContainer');
+
+                outrasCheckbox.addEventListener('change', () => {
+                    if (outrasCheckbox.checked) {
+                        outrasContainer.style.display = 'block';
+                    } else {
+                        outrasContainer.style.display = 'none';
+                    }
+                });
+            }
+
             setupAdaptationProcess() {
                 const adaptarBtn = document.getElementById('adaptarBtn');
                 const progressContainer = document.getElementById('progressContainer');
@@ -830,7 +817,6 @@
 
                 adaptarBtn.addEventListener('click', () => {
                     const fileInput = document.getElementById('fileInput');
-                    const provaNome = document.getElementById('provaNome').value;
                     const provaDisciplina = document.getElementById('provaDisciplina').value;
                     const provaAno = document.getElementById('provaAno').value;
 
@@ -840,9 +826,9 @@
                         return;
                     }
 
-                    // Verificar se há nome da prova
-                    if (!provaNome.trim()) {
-                        alert('Por favor, informe o nome da prova.');
+                    // Verificar se há disciplina
+                    if (!provaDisciplina.trim()) {
+                        alert('Por favor, informe a disciplina.');
                         return;
                     }
 
@@ -850,6 +836,14 @@
                     const adaptacoes = document.querySelectorAll('input[type="checkbox"]:checked');
                     if (adaptacoes.length === 0) {
                         alert('Por favor, selecione pelo menos uma adaptação necessária.');
+                        return;
+                    }
+
+                    // Verificar se "Outras Necessidades" foi selecionado sem especificação
+                    const outrasCheckbox = document.getElementById('adaptOutros');
+                    const outrasNeeds = document.getElementById('outrasNeeds').value;
+                    if (outrasCheckbox.checked && !outrasNeeds.trim()) {
+                        alert('Por favor, especifique as outras necessidades.');
                         return;
                     }
 
@@ -871,14 +865,18 @@
                                 resultContainer.style.display = 'block';
                                 
                                 // Simular conteúdo da prova adaptada
+                                const adaptacoesText = Array.from(adaptacoes).map(cb => {
+                                    if (cb.id === 'adaptOutros') {
+                                        return `Outras Necessidades: ${outrasNeeds}`;
+                                    }
+                                    const label = document.querySelector(`label[for="${cb.id}"]`);
+                                    return label ? label.textContent : cb.value;
+                                }).join(', ');
+                                
                                 resultPreview.innerHTML = `
-                                    <h4>${provaNome} - Adaptada</h4>
-                                    <p><strong>Disciplina:</strong> ${provaDisciplina}</p>
+                                    <h4>Prova de ${provaDisciplina} - Adaptada</h4>
                                     <p><strong>Ano/Série:</strong> ${provaAno}</p>
-                                    <p><strong>Adaptações aplicadas:</strong> ${Array.from(adaptacoes).map(cb => {
-                                        const label = document.querySelector(`label[for="${cb.id}"]`);
-                                        return label ? label.textContent : cb.value;
-                                    }).join(', ')}</p>
+                                    <p><strong>Adaptações aplicadas:</strong> ${adaptacoesText}</p>
                                     <hr>
                                     <p>Aqui estaria o conteúdo da prova adaptada conforme as necessidades selecionadas.</p>
                                     <p>Exemplo de adaptação para dislexia: texto com fonte mais legível, espaçamento maior entre linhas, instruções mais claras e diretas.</p>
