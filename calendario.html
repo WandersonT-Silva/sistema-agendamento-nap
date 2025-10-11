@@ -19,6 +19,8 @@
             --cinza-claro: #F8FAFC;
             --cinza-medio: #6B7280;
             --cinza-escuro: #1F2937;
+            --verde: #16A34A;
+            --vermelho: #DC2626;
         }
 
         * {
@@ -77,6 +79,28 @@
 
         .logo:hover {
             transform: scale(1.05);
+        }
+
+        /* Status da Integração */
+        .status-integracao {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--azul-marinho);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .status-integracao.conectado {
+            background: var(--verde);
+        }
+
+        .status-integracao.erro {
+            background: var(--vermelho);
         }
 
         /* ===== LAYOUT PRINCIPAL ===== */
@@ -338,8 +362,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 20px;
-            position: relative;
+            gap: 10px;
         }
 
         .btn-nav {
@@ -375,33 +398,6 @@
             text-align: center;
             flex: 1;
             padding: 0 10px;
-        }
-
-        /* Botão de atualizar com mais espaçamento */
-        .btn-atualizar-container {
-            margin-left: auto;
-            padding-left: 30px;
-        }
-
-        .btn-atualizar {
-            background: linear-gradient(135deg, var(--azul-marinho) 0%, var(--laranja) 100%);
-            color: var(--branco);
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
-            flex-shrink: 0;
-        }
-
-        .btn-atualizar:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(30, 58, 138, 0.4);
         }
 
         /* ===== GRADE DO CALENDÁRIO ===== */
@@ -641,16 +637,11 @@
             }
             
             .calendario-controls {
-                justify-content: flex-start;
+                justify-content: flex-end;
             }
             
             .mes-titulo {
                 min-width: 180px;
-            }
-
-            .btn-atualizar-container {
-                margin-left: auto;
-                padding-left: 50px;
             }
         }
 
@@ -671,11 +662,6 @@
             
             .mobile-menu {
                 display: block;
-            }
-
-            .btn-atualizar-container {
-                margin-left: auto;
-                padding-left: 20px;
             }
         }
 
@@ -734,7 +720,7 @@
                 min-height: 200px;
             }
             
-            .btn-nav, .btn-atualizar {
+            .btn-nav {
                 width: 36px;
                 height: 36px;
             }
@@ -749,11 +735,6 @@
             
             .filtro-container {
                 flex-direction: column;
-            }
-
-            .btn-atualizar-container {
-                margin-left: auto;
-                padding-left: 15px;
             }
         }
 
@@ -785,14 +766,6 @@
             
             .filtro-segmento label {
                 min-width: auto;
-            }
-
-            .calendario-controls {
-                gap: 10px;
-            }
-
-            .btn-atualizar-container {
-                padding-left: 10px;
             }
         }
 
@@ -826,6 +799,11 @@
 </head>
 <body>
     <div class="calendario-container">
+        <!-- Status da Integração -->
+        <div id="status-integracao" class="status-integracao" style="display: none;">
+            🔄 Conectando...
+        </div>
+
         <!-- Cabeçalho Simplificado -->
         <header class="header">
             <div class="header-background"></div>
@@ -855,6 +833,10 @@
                     <span class="mobile-menu-icon">📆</span>
                     <span class="mobile-menu-text">Calendário</span>
                 </li>
+                <li class="mobile-menu-item" data-menu="5">
+                    <span class="mobile-menu-icon">🔍</span>
+                    <span class="mobile-menu-text">Buscar</span>
+                </li>
             </ul>
         </nav>
 
@@ -882,6 +864,11 @@
                         <span class="menu-icon">📆</span>
                         <span class="menu-text">Calendário</span>
                         <span class="menu-tooltip">Visualizar calendário</span>
+                    </li>
+                    <li class="menu-item" data-menu="5">
+                        <span class="menu-icon">🔍</span>
+                        <span class="menu-text">Buscar</span>
+                        <span class="menu-tooltip">Busca por alunos</span>
                     </li>
                 </ul>
             </nav>
@@ -922,11 +909,9 @@
                                     <span class="nav-icon">›</span>
                                 </button>
                                 
-                                <div class="btn-atualizar-container">
-                                    <button id="btn-atualizar" class="btn-atualizar" title="Atualizar agendamentos">
-                                        <span class="nav-icon">🔄</span>
-                                    </button>
-                                </div>
+                                <button id="btn-atualizar" class="btn-nav" title="Atualizar agendamentos">
+                                    <span class="nav-icon">🔄</span>
+                                </button>
                             </div>
                         </div>
 
@@ -1197,17 +1182,20 @@
                         break;
                     case 4:
                         break;
+                    case 5:
+                        window.location.href = BASE_URL + '/busca.html';
+                        break;
                 }
             }
 
             // ✅ MÉTODOS DE INTEGRAÇÃO MICROSOFT LIST
             async testarIntegracaoMicrosoftList() {
                 try {
-                    console.log('🔄 Conectando com Microsoft List...');
+                    this.mostrarStatusIntegracao('🔄 Conectando com Microsoft List...');
                     
                     const token = await this.authManager.getAccessToken();
                     if (!token) {
-                        console.log('⚠️ Faça login para acessar Microsoft List');
+                        this.mostrarStatusIntegracao('⚠️ Use o modo offline', 'erro');
                         return;
                     }
 
@@ -1225,14 +1213,24 @@
                     if (response.ok) {
                         const data = await response.json();
                         MS_LIST_CONFIG.listId = data.id;
-                        console.log('✅ Conectado à Microsoft List - ID:', data.id);
+                        this.mostrarStatusIntegracao('✅ Conectado à Microsoft List', 'conectado');
+                        console.log('✅ List ID encontrado:', data.id);
                     } else {
-                        console.log('⚠️ Usando dados locais - Lista não encontrada');
+                        this.mostrarStatusIntegracao('⚠️ Usando dados locais', 'erro');
                     }
                     
                 } catch (error) {
                     console.error('❌ Erro na integração:', error);
-                    console.log('📋 Continuando com dados locais');
+                    this.mostrarStatusIntegracao('⚠️ Modo offline ativo', 'erro');
+                }
+            }
+
+            mostrarStatusIntegracao(mensagem, tipo = '') {
+                const statusElement = document.getElementById('status-integracao');
+                if (statusElement) {
+                    statusElement.textContent = mensagem;
+                    statusElement.className = `status-integracao ${tipo}`;
+                    statusElement.style.display = 'block';
                 }
             }
 
@@ -1338,13 +1336,16 @@
                 btnAtualizar.classList.add('atualizando');
                 
                 try {
-                    console.log('🔄 Atualizando agendamentos...');
                     await this.carregarAgendamentos();
                     this.renderizarCalendario();
-                    console.log('✅ Calendário atualizado com sucesso!');
+                    this.mostrarStatusIntegracao('✅ Calendário atualizado!', 'conectado');
+                    
+                    setTimeout(() => {
+                        this.mostrarStatusIntegracao('✅ Conectado à Microsoft List', 'conectado');
+                    }, 2000);
                     
                 } catch (error) {
-                    console.error('❌ Erro na atualização:', error);
+                    this.mostrarStatusIntegracao('❌ Erro na atualização', 'erro');
                 } finally {
                     setTimeout(() => {
                         btnAtualizar.classList.remove('atualizando');
@@ -1373,7 +1374,7 @@
                 });
             }
 
-            // ✅ MÉTODOS DO CALENDÁRIO
+            // ✅ MÉTODOS DO CALENDÁRIO (EXISTENTES - ATUALIZADOS)
             mesAnterior() {
                 this.dataReferencia.setMonth(this.dataReferencia.getMonth() - 1);
                 this.renderizarCalendario();
