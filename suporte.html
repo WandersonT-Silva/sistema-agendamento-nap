@@ -787,40 +787,6 @@
             });
         });
 
-        // Envio do formulário
-        document.getElementById('form-contato').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const assunto = document.getElementById('assunto').value;
-            const mensagem = document.getElementById('mensagem').value;
-            
-            // ✅ VALIDAÇÃO MELHORADA
-            if (!assunto || !mensagem.trim()) {
-                alert('Por favor, preencha todos os campos obrigatórios.');
-                return;
-            }
-            
-            // Simular envio (na versão final, integrar com backend/email)
-            console.log('Mensagem de suporte enviada:', { 
-                assunto, 
-                mensagem,
-                usuario: JSON.parse(currentUser).email,
-                timestamp: new Date().toISOString()
-            });
-            
-            const modal = document.getElementById('modal-confirmacao');
-            modal.style.display = 'flex';
-            
-            // Limpar formulário
-            this.reset();
-        });
-
-        // Fechar modal
-        document.getElementById('btn-modal-ok').addEventListener('click', function() {
-            const modal = document.getElementById('modal-confirmacao');
-            modal.style.display = 'none';
-        });
-
         // ✅ NAVEGAÇÃO DO MENU COM URLS ABSOLUTAS
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', function() {
@@ -859,5 +825,6 @@
 </body>
 
 </html>
+
 
 
