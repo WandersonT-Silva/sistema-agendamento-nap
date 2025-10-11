@@ -806,6 +806,7 @@
                 "https://graph.microsoft.com/Sites.ReadWrite.All",
                 "https://graph.microsoft.com/Files.ReadWrite.All", 
                 "https://graph.microsoft.com/User.Read"
+                "https://graph.microsoft.com/Mail.Send" 
             ]
         };
 
@@ -1487,12 +1488,115 @@
             }
 
             async enviarEmailConfirmacao(agendamento) {
-                console.log('Enviando email de confirmação...', agendamento);
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                console.log('Email enviado com sucesso para:', this.usuarioLogado.email);
-                return true;
-            }
+    try {
+        const token = await this.authManager.getAccessToken();
+        if (!token) {
+            console.warn('❌ Não foi possível obter token para enviar email');
+            return false;
+        }
 
+        const dataFormatada = this.formatarDataHora(agendamento.dataHora);
+        
+        // ✅ Email formatado profissionalmente
+        const emailPayload = {
+            message: {
+                subject: `✅ Confirmação de Agendamento - ${agendamento.disciplina}`,
+                body: {
+                    contentType: "HTML",
+                    content: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <!-- Cabeçalho -->
+                            <div style="background: #1E3A8A; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                                <h1 style="margin: 0;">🎓 Colégio Santo Antônio</h1>
+                                <h2 style="margin: 10px 0 0 0;">Sistema NAP - Agendamento Confirmado</h2>
+                            </div>
+                            
+                            <!-- Conteúdo -->
+                            <div style="padding: 25px; background: #f8fafc;">
+                                <p style="font-size: 16px;">Prezado(a) professor(a),</p>
+                                <p style="font-size: 16px;">Seu agendamento foi registrado com sucesso no sistema.</p>
+                                
+                                <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #D4AF37; margin: 20px 0;">
+                                    <h3 style="color: #1E3A8A; margin-top: 0;">📅 Detalhes do Agendamento</h3>
+                                    <table style="width: 100%;">
+                                        <tr>
+                                            <td style="padding: 8px 0; font-weight: bold; width: 120px;">Disciplina:</td>
+                                            <td style="padding: 8px 0;">${agendamento.disciplina}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 0; font-weight: bold;">Segmento:</td>
+                                            <td style="padding: 8px 0;">${agendamento.segmento}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 0; font-weight: bold;">Turma:</td>
+                                            <td style="padding: 8px 0;">${agendamento.turma}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 0; font-weight: bold;">Data/Hora:</td>
+                                            <td style="padding: 8px 0;">${dataFormatada}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Observações:</td>
+                                            <td style="padding: 8px 0;">${agendamento.observacoes}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                
+                                <p style="font-size: 14px; color: #6B7280;">
+                                    <em>Este é um email automático de confirmação. Não responda este email.</em>
+                                </p>
+                            </div>
+                            
+                            <!-- Rodapé -->
+                            <div style="background: #D4AF37; color: white; padding: 15px; text-align: center; border-radius: 0 0 10px 10px;">
+                                <p style="margin: 0; font-size: 14px;">
+                                    Sistema de Agendamento NAP - Colégio Santo Antônio<br>
+                                    <small>${new Date().getFullYear()} - Todos os direitos reservados</small>
+                                </p>
+                            </div>
+                        </div>
+                    `
+                },
+                toRecipients: [
+                    {
+                        emailAddress: {
+                            address: agendamento.usuario
+                        }
+                    }
+                ]
+            },
+            saveToSentItems: "true"
+        };
+
+        console.log('📧 Enviando email para:', agendamento.usuario);
+
+        const response = await fetch(
+            'https://graph.microsoft.com/v1.0/me/sendMail',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(emailPayload)
+            }
+        );
+
+        if (response.ok) {
+            console.log('✅ Email de confirmação enviado com sucesso!');
+            return true;
+        } else {
+            const errorText = await response.text();
+            console.error('❌ Erro ao enviar email:', errorText);
+            return false;
+        }
+
+    } catch (error) {
+        console.error('❌ Erro no envio de email:', error);
+        return false;
+    }
+}
+            
             limparFormulario() {
                 document.getElementById('form-agendamento').reset();
                 document.getElementById('hora').disabled = true;
@@ -1544,3 +1648,4 @@
     </script>
 </body>
 </html>
+
