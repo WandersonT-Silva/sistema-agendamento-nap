@@ -328,97 +328,6 @@
             font-size: 16px;
         }
 
-        /* ===== FORMULÁRIO DE CONTATO ===== */
-        .formulario-contato {
-            background: var(--branco);
-            border: 2px solid var(--azul-marinho);
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .formulario-contato h3 {
-            color: var(--azul-marinho);
-            font-size: 22px;
-            margin-bottom: 25px;
-            text-align: center;
-            border-bottom: 2px solid var(--dourado);
-            padding-bottom: 10px;
-        }
-
-        #form-contato {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group label {
-            font-weight: 600;
-            color: var(--azul-marinho);
-            font-size: 14px;
-        }
-
-        .form-group label.required::after {
-            content: '*';
-            color: var(--laranja);
-            margin-left: 4px;
-        }
-
-        .form-group select,
-        .form-group textarea {
-            padding: 12px 15px;
-            border: 2px solid var(--cinza-claro);
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            background: var(--branco);
-            font-family: inherit;
-        }
-
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--azul-marinho);
-            background: var(--branco);
-            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 120px;
-            line-height: 1.5;
-        }
-
-        .btn-enviar {
-            background: linear-gradient(135deg, var(--azul-marinho) 0%, var(--laranja) 100%);
-            color: var(--branco);
-            border: none;
-            padding: 15px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            justify-content: center;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
-        }
-
-        .btn-enviar:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(30, 58, 138, 0.4);
-        }
-
         /* ===== FAQ ===== */
         .faq-section {
             background: var(--branco);
@@ -643,7 +552,6 @@
         }
 
         .canais-contato,
-        .formulario-contato,
         .faq-section {
             animation: fadeIn 0.6s ease-out;
         }
@@ -745,39 +653,6 @@
                                 <p>Sábado: 8h às 12h</p>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Formulário de Contato Rápido -->
-                    <div class="formulario-contato">
-                        <h3>Envie uma mensagem rápida</h3>
-                        <form id="form-contato">
-                            <div class="form-group">
-                                <label for="assunto" class="required">Assunto</label>
-                                <select id="assunto" name="assunto" required>
-                                    <option value="">Selecione o assunto</option>
-                                    <option value="duvida">Dúvida sobre o sistema</option>
-                                    <option value="problema">Problema técnico</option>
-                                    <option value="sugestao">Sugestão de melhoria</option>
-                                    <option value="outro">Outro</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="mensagem" class="required">Mensagem</label>
-                                <textarea 
-                                    id="mensagem" 
-                                    name="mensagem" 
-                                    placeholder="Descreva sua dúvida, problema ou sugestão..."
-                                    required
-                                    rows="5"
-                                ></textarea>
-                            </div>
-
-                            <button type="submit" class="btn-enviar">
-                                <span class="btn-icon">📨</span>
-                                Enviar Mensagem
-                            </button>
-                        </form>
                     </div>
 
                     <!-- FAQ - Perguntas Frequentes -->
@@ -984,4 +859,5 @@
 </body>
 
 </html>
+
 
