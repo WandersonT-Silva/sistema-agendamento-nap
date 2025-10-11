@@ -965,7 +965,7 @@
                     
                     const token = await this.authManager.getAccessToken();
                     if (!token) {
-                        this.mostrarStatusIntegracao('⚠️ Faça login para acessar o Excel Online', 'erro');
+                        this.mostrarStatusIntegracao('⚠️ Um administrador deve permitir', 'erro');
                         return;
                     }
 
@@ -1481,3 +1481,4 @@
     </script>
 </body>
 </html>
+
