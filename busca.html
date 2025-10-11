@@ -20,8 +20,6 @@
             --cinza-claro: #F8FAFC;     /* Cinza muito claro */
             --cinza-medio: #6B7280;     /* Cinza médio */
             --cinza-escuro: #1F2937;    /* Cinza escuro */
-            --verde: #16A34A;           /* Verde para status */
-            --vermelho: #DC2626;        /* Vermelho para erros */
         }
 
         * {
@@ -79,28 +77,6 @@
 
         .logo:hover {
             transform: scale(1.05);
-        }
-
-        /* Status da Integração */
-        .status-integracao {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: var(--azul-marinho);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 12px;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        .status-integracao.conectado {
-            background: var(--verde);
-        }
-
-        .status-integracao.erro {
-            background: var(--vermelho);
         }
 
         /* ===== LAYOUT PRINCIPAL ===== */
@@ -460,30 +436,42 @@
             font-weight: 600;
             color: var(--azul-marinho);
             margin-bottom: 5px;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .aluno-local {
             font-size: 14px;
             color: var(--cinza-escuro);
             font-weight: 500;
+            line-height: 1.3;
         }
 
         .aluno-tipo-prova {
             font-size: 13px;
             color: var(--laranja);
             font-weight: 600;
+            line-height: 1.3;
         }
 
         .aluno-detalhes {
             margin-top: 10px;
             padding-top: 10px;
             border-top: 1px solid var(--cinza-claro);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .aluno-segmento, .aluno-turma {
             font-size: 12px;
             color: var(--cinza-medio);
-            margin-bottom: 3px;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .separador-aluno {
@@ -586,6 +574,11 @@
                 align-items: flex-start;
                 gap: 10px;
             }
+
+            .aluno-nome {
+                white-space: normal;
+                line-height: 1.2;
+            }
         }
 
         /* ===== ANIMAÇÕES ===== */
@@ -622,11 +615,6 @@
 </head>
 <body>
     <div class="busca-container">
-        <!-- Status da Integração -->
-        <div id="status-integracao" class="status-integracao" style="display: none;">
-            🔄 Conectando...
-        </div>
-
         <!-- Cabeçalho Simplificado -->
         <header class="header">
             <div class="header-background"></div>
@@ -961,11 +949,11 @@
             // ✅ MÉTODOS DE INTEGRAÇÃO EXCEL ONLINE - ATUALIZADOS
             async testarIntegracaoExcel() {
                 try {
-                    this.mostrarStatusIntegracao('🔄 Conectando com Excel Online...');
+                    console.log('🔄 Conectando com Excel Online...');
                     
                     const token = await this.authManager.getAccessToken();
                     if (!token) {
-                        this.mostrarStatusIntegracao('⚠️ Um administrador deve permitir', 'erro');
+                        console.log('⚠️ Faça login para acessar o Excel Online');
                         return;
                     }
 
@@ -974,15 +962,16 @@
                     
                     if (fileId) {
                         MS_EXCEL_CONFIG.excelFileId = fileId;
-                        this.mostrarStatusIntegracao('✅ Conectado ao Excel Online', 'conectado');
-                        console.log('✅ ID do arquivo obtido:', fileId);
+                        console.log('✅ Conectado ao Excel Online - ID do arquivo:', fileId);
                     } else {
-                        this.mostrarStatusIntegracao('⚠️ Não foi possível acessar o arquivo', 'erro');
+                        console.log('⚠️ Não foi possível acessar o arquivo Excel');
+                    console.log('📋 Usando dados locais como fallback');
+                    console.log('💡 Verifique se o arquivo existe e as permissões estão configuradas');
                     }
                     
                 } catch (error) {
-                    console.error('❌ Erro na integração:', error);
-                    this.mostrarStatusIntegracao('⚠️ Erro ao conectar com Excel Online', 'erro');
+                    console.error('❌ Erro na integração com Excel Online:', error);
+                    console.log('📋 Continuando com dados locais');
                 }
             }
 
@@ -1008,7 +997,7 @@
 
                     if (response.ok) {
                         const fileInfo = await response.json();
-                        console.log('✅ Arquivo encontrado:', fileInfo);
+                        console.log('✅ Arquivo encontrado:', fileInfo.name);
                         return fileInfo.id;
                     } else {
                         console.warn('❌ Arquivo não encontrado pelo caminho, tentando busca...');
@@ -1057,7 +1046,7 @@
                         );
                         
                         if (arquivo) {
-                            console.log('✅ Arquivo encontrado por nome:', arquivo);
+                            console.log('✅ Arquivo encontrado por nome:', arquivo.name);
                             return arquivo.id;
                         }
                     }
@@ -1065,15 +1054,6 @@
                     console.error('Erro na busca por nome:', error);
                 }
                 return null;
-            }
-
-            mostrarStatusIntegracao(mensagem, tipo = '') {
-                const statusElement = document.getElementById('status-integracao');
-                if (statusElement) {
-                    statusElement.textContent = mensagem;
-                    statusElement.className = `status-integracao ${tipo}`;
-                    statusElement.style.display = 'block';
-                }
             }
 
             async carregarDadosAlunos() {
@@ -1289,16 +1269,13 @@
                 btnAtualizar.classList.add('atualizando');
                 
                 try {
+                    console.log('🔄 Atualizando dados...');
                     await this.carregarDadosAlunos();
                     this.renderizarResultados();
-                    this.mostrarStatusIntegracao('✅ Dados atualizados!', 'conectado');
-                    
-                    setTimeout(() => {
-                        this.mostrarStatusIntegracao('✅ Conectado ao Excel Online', 'conectado');
-                    }, 2000);
+                    console.log('✅ Dados atualizados com sucesso!');
                     
                 } catch (error) {
-                    this.mostrarStatusIntegracao('❌ Erro na atualização', 'erro');
+                    console.error('❌ Erro na atualização:', error);
                 } finally {
                     setTimeout(() => {
                         btnAtualizar.classList.remove('atualizando');
@@ -1441,8 +1418,8 @@
                         <div class="aluno-local">${aluno.localProva}</div>
                         <div class="aluno-tipo-prova">${aluno.tipoProva}</div>
                         <div class="aluno-detalhes">
-                            <div class="aluno-segmento">Segmento: ${aluno.segmento}</div>
-                            <div class="aluno-turma">Turma: ${aluno.turma}</div>
+                            <div class="aluno-segmento">${aluno.segmento}</div>
+                            <div class="aluno-turma">${aluno.turma}</div>
                         </div>
                     </div>
                     <div class="separador-aluno"></div>
@@ -1481,4 +1458,3 @@
     </script>
 </body>
 </html>
-
