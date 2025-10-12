@@ -1057,23 +1057,37 @@
                     <!-- Configuração da API -->
                     <div class="api-config-section">
                         <button class="api-config-toggle" id="apiConfigToggle">
-                            <span>⚙️</span> Configuração da API DeepSeek
+                            <span>⚙️</span> Configuração do OpenRouter (DeepSeek Chat v3.1 - Gratuito)
                         </button>
                         <div class="api-config-content" id="apiConfigContent">
                             <div class="form-group">
-                                <label for="deepseekApiKey" class="required">API Key do DeepSeek</label>
-                                <input type="password" id="deepseekApiKey" class="form-control" 
+                                <label for="openRouterApiKey">API Key do OpenRouter</label>
+                                <input type="password" id="openRouterApiKey" class="form-control" 
                                        placeholder="Cole sua API Key aqui..."
-                                       value="">
+                                       value="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">
                                 <div class="form-hint">
-                                    Obtenha sua API Key em: 
-                                    <a href="https://platform.deepseek.com/api_keys" target="_blank">https://platform.deepseek.com/api_keys</a>
+                                    ✅ Chave gratuita pré-configurada. 
+                                    <strong>Modelo: DeepSeek Chat v3.1 (Gratuito)</strong>
+                                </div>
+                                <div class="form-hint">
+                                    Obtenha outra chave em: 
+                                    <a href="https://openrouter.ai/keys" target="_blank">https://openrouter.ai/keys</a>
                                 </div>
                                 <div class="error-message" id="api-key-error">Por favor, informe uma API Key válida</div>
                             </div>
                             <button class="btn-escola btn-secondary" id="testApiKeyBtn" style="width: auto; padding: 10px 20px;">
-                                <span>🔍</span> Testar API Key
+                                <span>🔍</span> Testar Conexão
                             </button>
+                            
+                            <!-- Status da API -->
+                            <div id="apiStatus" style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px; display: none;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #10B981;">✅</span>
+                                    <span style="font-size: 14px; color: #0369a1;">
+                                        Conectado ao <strong>DeepSeek Chat v3.1</strong> via OpenRouter
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1156,32 +1170,37 @@
         // ✅ CONFIGURAÇÃO DE URLS ABSOLUTAS
         const BASE_URL = 'https://wandersont-silva.github.io/sistema-agendamento-nap';
 
-        // ✅ SERVIÇO DEEPSEEK
-        class DeepSeekService {
+        // ✅ SERVIÇO OPENROUTER COM DEEPSEEK CHAT V3.1 GRATUITO
+        class OpenRouterService {
             constructor() {
-                this.apiKey = localStorage.getItem('deepseekApiKey') || '';
-                this.apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+                this.apiKey = localStorage.getItem('openRouterApiKey') || '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';
+                this.baseUrl = "https://openrouter.ai/api/v1";
+                this.modelGratuito = "deepseek/deepseek-chat-v3.1:free";
+                this.siteUrl = window.location.origin;
+                this.siteName = "Sistema NAP - Colégio Santo Antônio";
             }
-
+            
             setApiKey(apiKey) {
                 this.apiKey = apiKey;
-                localStorage.setItem('deepseekApiKey', apiKey);
+                localStorage.setItem('openRouterApiKey', apiKey);
             }
-
+            
             async testConnection() {
                 if (!this.apiKey) {
                     throw new Error('API Key não configurada');
                 }
-
+                
                 try {
-                    const response = await fetch(this.apiUrl, {
+                    const response = await fetch(`${this.baseUrl}/chat/completions`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${this.apiKey}`
+                            'Authorization': `Bearer ${this.apiKey}`,
+                            'HTTP-Referer': this.siteUrl,
+                            'X-Title': this.siteName
                         },
                         body: JSON.stringify({
-                            model: "deepseek-chat",
+                            model: this.modelGratuito,
                             messages: [
                                 {
                                     role: "user",
@@ -1193,32 +1212,35 @@
                     });
 
                     if (!response.ok) {
-                        throw new Error(`Erro API: ${response.status}`);
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(`Erro API: ${errorData.error?.message || response.status}`);
                     }
 
                     return true;
                 } catch (error) {
                     console.error('Erro teste conexão:', error);
-                    throw new Error('Falha na conexão com a API DeepSeek');
+                    throw new Error('Falha na conexão com OpenRouter');
                 }
             }
 
             async adaptarProva(provaTexto, adaptacoes, instrucoesEspeciais, dadosProva) {
                 if (!this.apiKey) {
-                    throw new Error('API Key não configurada. Configure na seção de configurações.');
+                    throw new Error('API Key não configurada. Use a chave fornecida ou configure uma nova.');
                 }
 
                 const prompt = this.criarPromptCompleto(provaTexto, adaptacoes, instrucoesEspeciais, dadosProva);
                 
                 try {
-                    const response = await fetch(this.apiUrl, {
+                    const response = await fetch(`${this.baseUrl}/chat/completions`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${this.apiKey}`
+                            'Authorization': `Bearer ${this.apiKey}`,
+                            'HTTP-Referer': this.siteUrl,
+                            'X-Title': this.siteName
                         },
                         body: JSON.stringify({
-                            model: "deepseek-chat",
+                            model: this.modelGratuito,
                             messages: [
                                 {
                                     role: "system",
@@ -1250,18 +1272,35 @@
             }
 
             criarInstrucoesSistema() {
-                return `Você é um especialista em educação inclusiva do Colégio Santo Antônio. Sua missão é adaptar provas mantendo:
+                return `Você é um especialista em educação inclusiva do Colégio Santo Antônio. Sua missão é adaptar provas para alunos com necessidades especiais mantendo:
 
-1. PADRÃO VISUAL DA ESCOLA: Use o modelo fornecido
+DIRETRIZES:
+1. PADRÃO VISUAL: Use exatamente o modelo de prova da escola fornecido
 2. QUALIDADE PEDAGÓGICA: Mantenha o conteúdo educativo original
-3. ADAPTAÇÕES INCLUSIVAS: Aplique técnicas comprovadas
-4. FORMATAÇÃO: Retorne HTML limpo e sem marcação
+3. ADAPTAÇÕES: Aplique técnicas comprovadas para cada necessidade específica
+4. FORMATAÇÃO: Retorne HTML limpo, sem comentários ou marcações extras
 
-IMPORTANTE: Sempre use o modelo da escola e adapte conforme solicitado.`;
+CRITÉRIOS DE ADAPTAÇÃO:
+- Dislexia: Fonte legível, espaçamento maior, instruções claras e diretas
+- TEA: Estrutura previsível, linguagem literal, redução de estímulos visuais
+- TDAH: Questões objetivas, instruções passo a passo, destaque visual
+- Discalculia: Problemas contextualizados, apoio visual, exemplos práticos
+- Baixa Visão: Fonte ampliada, alto contraste, espaçamento generoso
+
+IMPORTANTE: 
+- Use SEMPRE o modelo exato da escola fornecido
+- Adapte o conteúdo mantendo o mesmo nível de dificuldade
+- Preserve todas as questões originais, apenas adaptando a apresentação
+- Retorne apenas o HTML da prova adaptada, sem explicações adicionais`;
             }
 
             criarPromptCompleto(provaTexto, adaptacoes, instrucoesEspeciais, dadosProva) {
                 const instrucoesAdaptacao = this.criarInstrucoesAdaptacao(adaptacoes);
+                
+                // Limitar o tamanho do texto para evitar exceder tokens
+                const textoLimitado = provaTexto.length > 2500 ? 
+                    provaTexto.substring(0, 2500) + '\n\n[... conteúdo continua ...]' : 
+                    provaTexto;
                 
                 return `
 # ADAPTAÇÃO DE PROVA - COLÉGIO SANTO ANTÔNIO
@@ -1270,96 +1309,129 @@ IMPORTANTE: Sempre use o modelo da escola e adapte conforme solicitado.`;
 - DISCIPLINA: ${dadosProva.disciplina}
 - ANO/SÉRIE: ${dadosProva.ano}
 - TÍTULO: ${dadosProva.titulo || 'Avaliação Adaptada'}
+- DATA: ${new Date().toLocaleDateString('pt-BR')}
 
 ## ADAPTAÇÕES SOLICITADAS:
 ${instrucoesAdaptacao}
 
-## INSTRUÇÕES ESPECIAIS:
+## INSTRUÇÕES ESPECIAIS DO PROFESSOR:
 ${instrucoesEspeciais || 'Nenhuma instrução adicional'}
 
 ## TEXTO ORIGINAL DA PROVA:
-${provaTexto}
+${textoLimitado}
 
-## MODELO DA ESCOLA:
+## MODELO OFICIAL DA ESCOLA (USE ESTE FORMATO EXATO):
 
 <div style="font-family: Arial, sans-serif; max-width: 210mm; margin: 0 auto; padding: 20px; background: white;">
+    <!-- CABEÇALHO OFICIAL -->
     <div style="text-align: center; border-bottom: 3px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px;">
         <h1 style="color: #1E3A8A; margin: 0; font-size: 24px;">COLÉGIO SANTO ANTÔNIO</h1>
         <p style="color: #6B7280; margin: 5px 0 0 0; font-size: 14px;">Educação que transforma vidas</p>
     </div>
 
+    <!-- IDENTIFICAÇÃO DA PROVA -->
     <div style="background: #F8FAFC; padding: 15px; border-radius: 8px; border-left: 4px solid #D4AF37; margin-bottom: 20px;">
         <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="padding: 5px; width: 30%;"><strong>Disciplina:</strong></td><td style="padding: 5px;">${dadosProva.disciplina}</td></tr>
-            <tr><td style="padding: 5px;"><strong>Ano/Série:</strong></td><td style="padding: 5px;">${dadosProva.ano}</td></tr>
-            <tr><td style="padding: 5px;"><strong>Data:</strong></td><td style="padding: 5px;">${new Date().toLocaleDateString('pt-BR')}</td></tr>
+            <tr>
+                <td style="padding: 5px; width: 30%;"><strong>Disciplina:</strong></td>
+                <td style="padding: 5px;">${dadosProva.disciplina}</td>
+            </tr>
+            <tr>
+                <td style="padding: 5px;"><strong>Ano/Série:</strong></td>
+                <td style="padding: 5px;">${dadosProva.ano}</td>
+            </tr>
+            <tr>
+                <td style="padding: 5px;"><strong>Data:</strong></td>
+                <td style="padding: 5px;">${new Date().toLocaleDateString('pt-BR')}</td>
+            </tr>
         </table>
     </div>
 
+    <!-- INSTRUÇÕES GERAIS -->
     <div style="background: #FF6B35; color: white; padding: 12px; border-radius: 6px; margin-bottom: 25px;">
         <h3 style="margin: 0; font-size: 16px;">📝 INSTRUÇÕES GERAIS</h3>
         <p style="margin: 8px 0 0 0; font-size: 14px;">
             • Leia atentamente cada questão antes de responder<br>
             • Utilize caneta azul ou preta<br>
-            • Rascunhos devem ser feitos no verso da folha
+            • Rascunhos devem ser feitos no verso da folha<br>
+            • Tempo total: 50 minutos
         </p>
     </div>
 
+    <!-- CONTEÚDO DA PROVA -->
     <div id="conteudo-prova">
         [CONTEÚDO_ADAPTADO_AQUI]
     </div>
 
+    <!-- RODAPÉ -->
     <div style="text-align: center; margin-top: 40px; padding-top: 15px; border-top: 2px solid #e5e7eb; color: #6B7280; font-size: 12px;">
-        <p>Colégio Santo Antônio - Sistema NAP de Adaptação de Provas</p>
+        <p>Colégio Santo Antônio - Sistema NAP de Adaptação de Provas<br>
+        Prova adaptada em: ${new Date().toLocaleDateString('pt-BR')}</p>
     </div>
 </div>
 
 ## INSTRUÇÕES FINAIS:
-1. ADAPTE o conteúdo aplicando as adaptações solicitadas
-2. MANTENHA o modelo visual da escola
-3. PRESERVE o conteúdo pedagógico original
-4. GERE HTML limpo e formatado
-5. INCLUA todas as questões adaptadas
+1. ADAPTE o conteúdo da prova original aplicando as adaptações solicitadas
+2. MANTENHA o modelo visual da escola EXATAMENTE como fornecido
+3. PRESERVE o conteúdo pedagógico e nível de dificuldade originais
+4. GERE uma prova pronta para impressão em HTML limpo
+5. INCLUA todas as questões adaptadas dentro da seção [CONTEÚDO_ADAPTADO_AQUI]
+6. USE português claro, acessível e adequado ao ano/série
 
-PROVA ADAPTADA (em HTML dentro do modelo):
+PROVA ADAPTADA (em HTML dentro do modelo exato da escola):
 `;
             }
 
             criarInstrucoesAdaptacao(adaptacoes) {
                 const instrucoes = {
-                    'dislexia': `• Fonte Arial 14pt com espaçamento 1.5
-• Texto justificado à esquerda
-• Instruções claras e diretas
-• Uso de marcadores visuais
-• Evitar blocos longos de texto`,
+                    'dislexia': `🔹 DISLEXIA:
+• Fonte Arial 14pt com espaçamento 1.5 entre linhas
+• Texto justificado à esquerda (não centralizado)
+• Instruções claras, diretas e em linguagem simples
+• Uso de marcadores visuais (●, →, ✓)
+• Evitar blocos longos de texto (máximo 4 linhas)
+• Destaque em negrito para palavras-chave
+• Espaçamento generoso entre parágrafos`,
 
-                    'tea': `• Estrutura previsível e consistente
-• Linguagem literal e objetiva
-• Redução de estímulos visuais
-• Sequência lógica clara
-• Instruções passo a passo`,
+                    'tea': `🔹 TEA (TRANSTORNO DO ESPECTRO AUTISTA):
+• Estrutura previsível e consistente em toda a prova
+• Linguagem literal, objetiva e sem ambiguidades
+• Redução de estímulos visuais desnecessários
+• Sequência lógica clara com numeração evidente
+• Instruções passo a passo para cada questão
+• Uso de exemplos concretos quando possível
+• Evitar metáforas e linguagem figurativa`,
 
-                    'tdah': `• Questões objetivas e concisas
-• Instruções destacadas
-• Espaçamento ampliado
-• Limitar opções de resposta
-• Checklist para revisão`,
+                    'tdah': `🔹 TDAH (TRANSTORNO DE DÉFICIT DE ATENÇÃO):
+• Questões objetivas, concisas e diretas ao ponto
+• Instruções destacadas visualmente
+• Espaçamento ampliado entre questões
+• Limitar opções de resposta (máximo 4 alternativas)
+• Checklist para revisão no final
+• Divisão de tarefas complexas em etapas
+• Destaque visual para informações importantes`,
 
-                    'discalculia': `• Problemas contextualizados
-• Uso de recursos visuais
-• Calculadora permitida
-• Exemplos resolvidos
-• Dicas de resolução`,
+                    'discalculia': `🔹 DISCALCULIA:
+• Problemas matemáticos contextualizados no cotidiano
+• Uso de recursos visuais (gráficos, imagens, diagramas)
+• Calculadora permitida quando apropriado
+• Exemplos resolvidos para questões similares
+• Dicas de resolução para problemas complexos
+• Formulação clara dos enunciados
+• Espaço ampliado para cálculos`,
 
-                    'baixa-visao': `• Fonte ampliada (16pt+)
-• Alto contraste preto/branco
-• Espaçamento generoso
-• Imagens com descrição
-• Formato A4 landscape`
+                    'baixa-visao': `🔹 BAIXA VISÃO:
+• Fonte ampliada (mínimo 16pt para todo o texto)
+• Alto contraste preto sobre branco
+• Espaçamento generoso entre letras e linhas
+• Imagens com descrição textual alternativa
+• Formato preferencial A4 landscape
+• Marcadores visuais grandes e evidentes
+• Organização clara e não sobrecarregada`
                 };
 
                 return adaptacoes.map(adapt => 
-                    `🔹 ${adapt.toUpperCase()}:\n${instrucoes[adapt] || 'Adaptações personalizadas aplicadas'}`
+                    `${instrucoes[adapt] || `🔹 OUTRAS NECESSIDADES:\n• Adaptações personalizadas conforme especificado`}`
                 ).join('\n\n');
             }
         }
@@ -1450,7 +1522,7 @@ PROVA ADAPTADA (em HTML dentro do modelo):
         // ✅ GERENCIADOR PRINCIPAL
         class AdaptacaoManager {
             constructor() {
-                this.deepSeekService = new DeepSeekService();
+                this.openRouterService = new OpenRouterService(); // CORRIGIDO: OpenRouterService
                 this.fileProcessor = new FileProcessor();
                 this.provaAdaptadaHTML = null;
                 this.init();
@@ -1468,10 +1540,14 @@ PROVA ADAPTADA (em HTML dentro do modelo):
             }
 
             carregarConfiguracoes() {
-                const apiKeySalva = localStorage.getItem('deepseekApiKey');
+                const apiKeySalva = localStorage.getItem('openRouterApiKey'); // CORRIGIDO: openRouterApiKey
                 if (apiKeySalva) {
-                    document.getElementById('deepseekApiKey').value = apiKeySalva;
-                    this.deepSeekService.setApiKey(apiKeySalva);
+                    document.getElementById('openRouterApiKey').value = apiKeySalva; // CORRIGIDO: openRouterApiKey
+                    this.openRouterService.setApiKey(apiKeySalva);
+                } else {
+                    // Usa a chave gratuita fornecida
+                    this.openRouterService.setApiKey('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');
+                    document.getElementById('openRouterApiKey').value = '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';
                 }
             }
 
@@ -1604,14 +1680,16 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                 const toggleBtn = document.getElementById('apiConfigToggle');
                 const configContent = document.getElementById('apiConfigContent');
                 const testBtn = document.getElementById('testApiKeyBtn');
-                const apiKeyInput = document.getElementById('deepseekApiKey');
+                const apiKeyInput = document.getElementById('openRouterApiKey');
+                const apiStatus = document.getElementById('apiStatus');
 
                 toggleBtn.addEventListener('click', () => {
                     configContent.classList.toggle('show');
                 });
 
                 apiKeyInput.addEventListener('input', (e) => {
-                    this.deepSeekService.setApiKey(e.target.value.trim());
+                    this.openRouterService.setApiKey(e.target.value.trim());
+                    apiStatus.style.display = 'none';
                 });
 
                 testBtn.addEventListener('click', async () => {
@@ -1622,17 +1700,19 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                     }
 
                     testBtn.disabled = true;
-                    testBtn.innerHTML = '<span>⏳</span> Testando...';
+                    testBtn.innerHTML = '<span>⏳</span> Testando DeepSeek v3.1...';
 
                     try {
-                        await this.deepSeekService.testConnection();
-                        this.mostrarSucesso('Conexão com DeepSeek estabelecida com sucesso!');
+                        await this.openRouterService.testConnection();
+                        this.mostrarSucesso('Conexão com DeepSeek Chat v3.1 estabelecida!');
                         document.getElementById('api-key-error').style.display = 'none';
+                        apiStatus.style.display = 'block';
                     } catch (error) {
                         this.mostrarErro('api-key-error', error.message);
+                        apiStatus.style.display = 'none';
                     } finally {
                         testBtn.disabled = false;
-                        testBtn.innerHTML = '<span>🔍</span> Testar API Key';
+                        testBtn.innerHTML = '<span>🔍</span> Testar Conexão';
                     }
                 });
             }
@@ -1686,8 +1766,8 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                 }
 
                 // Validar API Key
-                if (!this.deepSeekService.apiKey) {
-                    this.mostrarErro('api-key-error', 'Configure sua API Key do DeepSeek');
+                if (!this.openRouterService.apiKey) { // CORRIGIDO: openRouterService
+                    this.mostrarErro('api-key-error', 'Configure sua API Key do OpenRouter'); // CORRIGIDO: OpenRouter
                     valido = false;
                 }
 
@@ -1745,14 +1825,12 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                 const progressText = document.getElementById('progressText');
                 const resultadoContainer = document.getElementById('resultadoContainer');
 
-                // Configurar interface para processamento
                 adaptarBtn.disabled = true;
                 adaptarBtn.innerHTML = '<span>⏳</span> Processando com IA...';
                 progressContainer.style.display = 'block';
                 resultadoContainer.style.display = 'none';
 
                 try {
-                    // Obter dados do formulário
                     const arquivo = document.getElementById('fileInput').files[0];
                     const adaptacoes = this.obterAdaptacoesSelecionadas();
                     const instrucoes = document.getElementById('instrucoes').value;
@@ -1763,12 +1841,11 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                         titulo: document.getElementById('provaTitulo').value || 'Avaliação Adaptada'
                     };
 
-                    // Processamento em etapas
                     await this.executarEtapa('Extraindo texto da prova...', 20);
                     const textoProva = await this.fileProcessor.extrairTexto(arquivo);
                     
-                    await this.executarEtapa('Enviando para IA DeepSeek...', 40);
-                    const provaAdaptadaHTML = await this.deepSeekService.adaptarProva(
+                    await this.executarEtapa('Enviando para DeepSeek Chat v3.1...', 40); // CORRIGIDO: DeepSeek
+                    const provaAdaptadaHTML = await this.openRouterService.adaptarProva( // CORRIGIDO: openRouterService
                         textoProva, adaptacoes, instrucoes, dadosProva
                     );
                     
@@ -1777,7 +1854,6 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                     
                     await this.executarEtapa('Finalizando...', 100);
 
-                    // Mostrar resultado
                     progressContainer.style.display = 'none';
                     resultadoContainer.style.display = 'block';
                     adaptarBtn.disabled = false;
@@ -1802,25 +1878,21 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                 progressText.textContent = mensagem;
                 progressBar.style.width = `${progresso}%`;
                 
-                // Atualizar steps visuais
                 document.querySelectorAll('.progress-step').forEach((step, index) => {
                     const stepProgress = [25, 50, 75, 100][index] || 100;
                     step.classList.toggle('active', progresso >= stepProgress);
                 });
                 
-                // Pequena pausa para animação
                 await new Promise(resolve => setTimeout(resolve, 800));
             }
 
             mostrarErroProcessamento(mensagem) {
                 const progressContainer = document.getElementById('progressContainer');
                 progressContainer.style.display = 'none';
-                
                 alert('❌ Erro no processamento: ' + mensagem);
             }
 
             mostrarResultado(provaAdaptadaHTML) {
-                // Preencher resumo
                 document.getElementById('resumo-disciplina').textContent = 
                     document.getElementById('provaDisciplina').value;
                 document.getElementById('resumo-ano').textContent = 
@@ -1828,7 +1900,6 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                 document.getElementById('resumo-data').textContent = 
                     new Date().toLocaleDateString('pt-BR');
                 
-                // Listar adaptações
                 const adaptacoes = this.obterAdaptacoesSelecionadas();
                 const nomesAdaptacoes = {
                     'dislexia': 'Dislexia',
@@ -1842,7 +1913,6 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                 document.getElementById('resumo-adaptacoes').textContent = 
                     adaptacoes.map(adapt => nomesAdaptacoes[adapt]).join(', ');
 
-                // Mostrar preview
                 const previewContent = document.getElementById('preview-content');
                 previewContent.innerHTML = provaAdaptadaHTML || 
                     '<p style="color: #6B7280; text-align: center;">Prévia da prova adaptada aparecerá aqui</p>';
@@ -1861,11 +1931,9 @@ PROVA ADAPTADA (em HTML dentro do modelo):
                 btn.innerHTML = '<span>⏳</span> Gerando...';
 
                 try {
-                    // Criar blob com a prova adaptada
                     const blob = new Blob([this.provaAdaptadaHTML], { type: 'text/html' });
                     const url = URL.createObjectURL(blob);
                     
-                    // Criar link de download
                     const link = document.createElement('a');
                     const disciplina = document.getElementById('provaDisciplina').value;
                     const nomeArquivo = `prova_adaptada_${disciplina.replace(/\s+/g, '_')}.html`;
@@ -1889,23 +1957,18 @@ PROVA ADAPTADA (em HTML dentro do modelo):
             }
 
             limparFormulario() {
-                // Limpar campos
                 ['provaDisciplina', 'provaAno', 'provaTitulo', 'outrasNeeds', 'instrucoes'].forEach(id => {
                     document.getElementById(id).value = '';
                 });
                 
-                // Limpar arquivo
                 this.removerArquivo();
                 
-                // Limpar checkboxes
                 document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
                     cb.checked = false;
                 });
                 
-                // Ocultar campo de outras necessidades
                 document.getElementById('outrasNeedsContainer').style.display = 'none';
                 
-                // Limpar erros
                 document.querySelectorAll('.error-message').forEach(error => {
                     error.style.display = 'none';
                 });
