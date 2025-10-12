@@ -655,6 +655,11 @@
                         <span class="menu-text">Buscar</span>
                         <span class="menu-tooltip">Busca por alunos</span>
                     </li>
+                    <li class="menu-item" data-menu="6">
+                        <span class="menu-icon">📝</span>
+                        <span class="menu-text">Adaptar</span>
+                        <span class="menu-tooltip">Adaptar prova</span>
+                    </li>
                 </ul>
             </nav>
 
@@ -942,6 +947,9 @@
                         window.location.href = BASE_URL + '/calendario.html';
                         break;
                     case 5: // Busca (já estamos aqui)
+                        break;
+                    case 6: 
+                        window.location.href = BASE_URL + '/AdaptaProva.html;
                         break;
                 }
             }
@@ -1458,3 +1466,4 @@
     </script>
 </body>
 </html>
+
