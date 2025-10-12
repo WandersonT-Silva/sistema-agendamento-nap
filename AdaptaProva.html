@@ -18,6 +18,8 @@
             --cinza-medio: #6B7280;
             --cinza-escuro: #1F2937;
             --verde: #10B981;
+            --vermelho: #EF4444;
+            --azul-claro: #3B82F6;
         }
 
         * {
@@ -57,7 +59,7 @@
             z-index: 2;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             padding: 0 30px;
             height: 100%;
         }
@@ -76,6 +78,24 @@
 
         .logo:hover {
             transform: scale(1.05);
+        }
+
+        .user-info {
+            color: var(--branco);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--dourado);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
         /* ===== LAYOUT PRINCIPAL ===== */
@@ -230,24 +250,74 @@
         /* ===== CONTEÚDO PRINCIPAL ===== */
         .content {
             flex: 1;
-            padding: 15px;
+            padding: 20px;
             background: var(--cinza-claro);
             overflow: auto;
+        }
+
+        .page-header {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--dourado);
+        }
+
+        .page-title {
+            color: var(--azul-marinho);
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .page-subtitle {
+            color: var(--cinza-medio);
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
         }
 
         /* ===== FORMULÁRIO DE ADAPTAÇÃO ===== */
-        .formulario-adaptacao {
+        .form-container {
             background: var(--branco);
-            border: 2px solid var(--azul-marinho);
-            border-radius: 12px;
+            border-radius: 15px;
             padding: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--azul-marinho);
+            max-width: 1000px;
             margin: 0 auto;
-            width: 100%;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-header h2 {
+            color: var(--azul-marinho);
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .form-header p {
+            color: var(--cinza-medio);
+            font-size: 16px;
+        }
+
+        .form-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .form-sections {
+                grid-template-columns: 1fr;
+            }
         }
 
         .form-section {
@@ -260,6 +330,13 @@
             font-size: 18px;
             border-bottom: 2px solid var(--dourado);
             padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-icon {
+            font-size: 20px;
         }
 
         .form-group {
@@ -271,12 +348,21 @@
             margin-bottom: 8px;
             font-weight: 600;
             color: var(--cinza-escuro);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .required::after {
+            content: '*';
+            color: var(--vermelho);
+            margin-left: 4px;
         }
 
         .form-control {
             width: 100%;
             padding: 12px 15px;
-            border: 1px solid #ddd;
+            border: 2px solid #e5e7eb;
             border-radius: 8px;
             font-size: 15px;
             transition: all 0.3s ease;
@@ -288,37 +374,94 @@
             box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
         }
 
+        .form-hint {
+            font-size: 12px;
+            color: var(--cinza-medio);
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* ===== CHECKBOXES MELHORADOS ===== */
+        .checkbox-section {
+            background: var(--cinza-claro);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--azul-claro);
+        }
+
         .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin-top: 10px;
         }
 
+        @media (max-width: 480px) {
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .checkbox-item {
             display: flex;
-            align-items: center;
-            margin-bottom: 10px;
+            align-items: flex-start;
+            padding: 12px;
+            background: var(--branco);
+            border-radius: 8px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .checkbox-item:hover {
+            border-color: var(--laranja);
+            transform: translateY(-2px);
         }
 
         .checkbox-item input {
-            margin-right: 8px;
+            margin-right: 10px;
+            margin-top: 2px;
+        }
+
+        .checkbox-label {
+            flex: 1;
+        }
+
+        .checkbox-title {
+            font-weight: 600;
+            color: var(--cinza-escuro);
+            margin-bottom: 4px;
+        }
+
+        .checkbox-description {
+            font-size: 12px;
+            color: var(--cinza-medio);
+            line-height: 1.3;
         }
 
         .outras-needs-container {
-            margin-top: 10px;
+            margin-top: 15px;
             display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* ===== UPLOAD MELHORADO ===== */
+        .upload-section {
+            background: var(--cinza-claro);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--verde);
         }
 
         .file-upload-area {
             border: 2px dashed var(--cinza-medio);
             border-radius: 10px;
-            padding: 30px;
+            padding: 40px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: var(--cinza-claro);
-            margin-top: 20px;
+            background: var(--branco);
+            position: relative;
         }
 
         .file-upload-area:hover {
@@ -332,7 +475,7 @@
         }
 
         .file-icon {
-            font-size: 40px;
+            font-size: 48px;
             margin-bottom: 15px;
             color: var(--cinza-medio);
         }
@@ -342,23 +485,87 @@
             color: var(--cinza-medio);
         }
 
-        .file-name {
+        .file-requirements {
+            font-size: 12px;
+            color: var(--cinza-medio);
             margin-top: 10px;
-            font-weight: 600;
-            color: var(--azul-marinho);
         }
 
+        .file-name {
+            margin-top: 15px;
+            font-weight: 600;
+            color: var(--azul-marinho);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--cinza-medio);
+            font-weight: normal;
+        }
+
+        .file-remove {
+            color: var(--vermelho);
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* ===== BOTÕES ESTILO ESCOLA ===== */
+        .btn-escola {
+            background: linear-gradient(135deg, var(--laranja) 0%, var(--dourado) 100%);
+            color: var(--branco);
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .btn-escola:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-escola:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--cinza-medio) 0%, var(--cinza-escuro) 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--verde) 0%, #059669 100%);
+        }
+
+        /* ===== PROGRESSO ===== */
         .progress-container {
             margin-top: 20px;
             display: none;
+            text-align: center;
         }
 
         .progress-bar {
-            height: 10px;
+            height: 12px;
             background: var(--cinza-claro);
-            border-radius: 5px;
+            border-radius: 6px;
             overflow: hidden;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            position: relative;
         }
 
         .progress {
@@ -368,37 +575,37 @@
             transition: width 0.3s ease;
         }
 
-        /* ===== BOTÕES ESTILO ESCOLA ===== */
-        .btn-escola {
-            background: linear-gradient(135deg, var(--laranja) 0%, var(--dourado) 100%);
-            color: var(--branco);
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: var(--cinza-medio);
         }
 
-        .btn-escola:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .progress-step.active {
+            color: var(--azul-marinho);
+            font-weight: 600;
         }
 
         /* ===== RESULTADO ===== */
         .resultado-container {
             margin-top: 30px;
             display: none;
+            animation: fadeIn 0.5s ease;
         }
 
         .resultado-card {
             background: var(--branco);
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             border-left: 5px solid var(--verde);
         }
 
@@ -406,44 +613,87 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--cinza-claro);
         }
 
         .resultado-title {
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             color: var(--azul-marinho);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .resultado-badge {
+            background: var(--verde);
+            color: var(--branco);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .resultado-actions {
+            display: flex;
+            gap: 10px;
         }
 
         .resultado-preview {
             margin-top: 20px;
-            padding: 15px;
+            padding: 20px;
             background: var(--cinza-claro);
-            border-radius: 8px;
-            max-height: 300px;
+            border-radius: 10px;
+            max-height: 400px;
             overflow-y: auto;
         }
 
-        /* ===== MEDIA QUERIES PARA RESPONSIVIDADE ===== */
-        
-        /* Desktop - Layout original */
-        @media (min-width: 1025px) {
-            .main-layout {
-                flex-direction: row;
-                height: calc(100vh - 70px);
-            }
-            
-            .mobile-menu {
-                display: none;
-            }
-            
-            .sidebar {
-                display: flex;
-            }
+        .adaptation-summary {
+            background: var(--branco);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--dourado);
         }
 
-        /* Tablet */
-        @media (max-width: 1024px) and (min-width: 769px) {
+        /* ===== DICAS E AJUDA ===== */
+        .help-section {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(30, 58, 138, 0.1) 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border-left: 4px solid var(--azul-claro);
+        }
+
+        .help-title {
+            color: var(--azul-marinho);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .help-content {
+            font-size: 14px;
+            color: var(--cinza-escuro);
+            line-height: 1.5;
+        }
+
+        .help-tips {
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+
+        .help-tips li {
+            margin-bottom: 8px;
+        }
+
+        /* ===== MEDIA QUERIES ===== */
+        @media (max-width: 1024px) {
             .sidebar {
                 display: none;
             }
@@ -453,42 +703,32 @@
             }
         }
 
-        /* Mobile */
         @media (max-width: 768px) {
-            .header {
-                height: 60px;
+            .header-content {
+                padding: 0 15px;
             }
             
             .logo {
-                height: 35px;
-            }
-            
-            .sidebar {
-                display: none;
-            }
-            
-            .mobile-menu {
-                display: block;
+                height: 40px;
             }
             
             .content {
-                padding: 10px;
-                gap: 10px;
+                padding: 15px;
             }
             
-            .formulario-adaptacao {
+            .form-container {
                 padding: 20px;
             }
             
-            .checkbox-group {
+            .page-header {
                 flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
             }
-        }
-
-        /* Mobile muito pequeno */
-        @media (max-width: 480px) {
-            .checkbox-group {
-                flex-direction: column;
+            
+            .quick-actions {
+                width: 100%;
+                justify-content: space-between;
             }
         }
 
@@ -504,7 +744,7 @@
             }
         }
 
-        .formulario-adaptacao {
+        .form-container {
             animation: fadeIn 0.4s ease-out;
         }
 
@@ -517,16 +757,36 @@
         .processando {
             animation: pulse 1s ease-in-out;
         }
+
+        /* ===== VALIDAÇÃO ===== */
+        .error-message {
+            color: var(--vermelho);
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-control.error {
+            border-color: var(--vermelho);
+        }
+
+        .checkbox-item.error {
+            border-color: var(--vermelho);
+        }
     </style>
 </head>
 <body>
     <div class="adaptacao-container">
-        <!-- Cabeçalho Simplificado -->
+        <!-- Cabeçalho Melhorado -->
         <header class="header">
             <div class="header-background"></div>
             <div class="header-content">
                 <div class="logo-container">
                     <img src="logo-santo-antonio.png" alt="Colégio Santo Antônio" class="logo">
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">PM</div>
+                    <span>Prof. Miguel Silva</span>
                 </div>
             </div>
         </header>
@@ -537,6 +797,10 @@
                 <li class="mobile-menu-item" data-menu="1">
                     <span class="mobile-menu-icon">🏠</span>
                     <span class="mobile-menu-text">Início</span>
+                </li>
+                <li class="mobile-menu-item active" data-menu="6">
+                    <span class="mobile-menu-icon">📝</span>
+                    <span class="mobile-menu-text">Adaptar</span>
                 </li>
                 <li class="mobile-menu-item" data-menu="2">
                     <span class="mobile-menu-icon">📅</span>
@@ -554,10 +818,6 @@
                     <span class="mobile-menu-icon">🔍</span>
                     <span class="mobile-menu-text">Buscar</span>
                 </li>
-                <li class="mobile-menu-item active" data-menu="6">
-                    <span class="mobile-menu-icon">📝</span>
-                    <span class="mobile-menu-text">Adaptar</span>
-                </li>
             </ul>
         </nav>
 
@@ -570,6 +830,11 @@
                         <span class="menu-icon">🏠</span>
                         <span class="menu-text">Início</span>
                         <span class="menu-tooltip">Página inicial</span>
+                    </li>
+                    <li class="menu-item active" data-menu="6">
+                        <span class="menu-icon">📝</span>
+                        <span class="menu-text">Adaptar</span>
+                        <span class="menu-tooltip">Adaptar prova</span>
                     </li>
                     <li class="menu-item" data-menu="2">
                         <span class="menu-icon">📅</span>
@@ -591,98 +856,237 @@
                         <span class="menu-text">Buscar</span>
                         <span class="menu-tooltip">Busca por alunos</span>
                     </li>
-                    <li class="menu-item active" data-menu="6">
-                        <span class="menu-icon">📝</span>
-                        <span class="menu-text">Adaptar</span>
-                        <span class="menu-tooltip">Adaptar prova</span>
-                    </li>
                 </ul>
             </nav>
 
             <!-- Conteúdo Principal -->
             <main class="content">
-                <div class="formulario-adaptacao">
-                    <h2 style="color: var(--azul-marinho); text-align: center; margin-bottom: 30px;">Adaptação de Provas</h2>
-                    
-                    <div class="form-section">
-                        <h3>Informações da Prova</h3>
-                        <div class="form-group">
-                            <label for="provaDisciplina">Disciplina</label>
-                            <input type="text" id="provaDisciplina" class="form-control" placeholder="Ex: Matemática, Português, Ciências...">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Adaptação de Provas</h1>
+                        <p class="page-subtitle">Adapte avaliações para alunos com necessidades especiais</p>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="btn-escola btn-secondary" id="btn-limpar">
+                            <span>🗑️</span> Limpar
+                        </button>
+                        <button class="btn-escola" id="btn-salvar-rascunho">
+                            <span>💾</span> Salvar Rascunho
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-container">
+                    <div class="form-header">
+                        <h2>Nova Adaptação de Prova</h2>
+                        <p>Preencha as informações abaixo para adaptar sua prova</p>
+                    </div>
+
+                    <div class="form-sections">
+                        <!-- Seção 1: Informações Básicas -->
+                        <div>
+                            <div class="form-section">
+                                <h3><span class="section-icon">📋</span> Informações da Prova</h3>
+                                <div class="form-group">
+                                    <label for="provaDisciplina" class="required">Disciplina</label>
+                                    <input type="text" id="provaDisciplina" class="form-control" 
+                                           placeholder="Ex: Matemática, Português, Ciências...">
+                                    <div class="error-message" id="disciplina-error">Por favor, informe a disciplina</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="provaAno" class="required">Ano/Série</label>
+                                    <select id="provaAno" class="form-control">
+                                        <option value="">Selecione o ano/série</option>
+                                        <option value="1º Ano EF">1º Ano - Ensino Fundamental</option>
+                                        <option value="2º Ano EF">2º Ano - Ensino Fundamental</option>
+                                        <option value="3º Ano EF">3º Ano - Ensino Fundamental</option>
+                                        <option value="4º Ano EF">4º Ano - Ensino Fundamental</option>
+                                        <option value="5º Ano EF">5º Ano - Ensino Fundamental</option>
+                                        <option value="6º Ano EF">6º Ano - Ensino Fundamental</option>
+                                        <option value="7º Ano EF">7º Ano - Ensino Fundamental</option>
+                                        <option value="8º Ano EF">8º Ano - Ensino Fundamental</option>
+                                        <option value="9º Ano EF">9º Ano - Ensino Fundamental</option>
+                                        <option value="1º Ano EM">1º Ano - Ensino Médio</option>
+                                        <option value="2º Ano EM">2º Ano - Ensino Médio</option>
+                                        <option value="3º Ano EM">3º Ano - Ensino Médio</option>
+                                    </select>
+                                    <div class="error-message" id="ano-error">Por favor, selecione o ano/série</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="provaTitulo">Título da Prova (Opcional)</label>
+                                    <input type="text" id="provaTitulo" class="form-control" 
+                                           placeholder="Ex: Avaliação Bimestral, Prova de Recuperação...">
+                                    <div class="form-hint">Um título descritivo ajuda a identificar a prova posteriormente</div>
+                                </div>
+                            </div>
+
+                            <!-- Seção 2: Upload -->
+                            <div class="form-section">
+                                <div class="upload-section">
+                                    <h3><span class="section-icon">📄</span> Upload da Prova</h3>
+                                    <div class="file-upload-area" id="fileUploadArea">
+                                        <div class="file-icon">📄</div>
+                                        <p><strong>Arraste e solte o arquivo da prova aqui</strong></p>
+                                        <p>ou</p>
+                                        <button class="btn-escola" id="selectFileBtn">
+                                            <span>📁</span> Selecionar Arquivo
+                                        </button>
+                                        <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                                        <div class="file-requirements">
+                                            Formatos suportados: PDF, DOC, DOCX, TXT (Máx. 10MB)
+                                        </div>
+                                        <div class="file-name" id="fileName"></div>
+                                    </div>
+                                    <div class="error-message" id="arquivo-error">Por favor, selecione um arquivo de prova</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="provaAno">Ano/Série</label>
-                            <input type="text" id="provaAno" class="form-control" placeholder="Ex: 5º Ano, 1º Ano do Ensino Médio...">
+
+                        <!-- Seção 3: Adaptações -->
+                        <div>
+                            <div class="form-section">
+                                <div class="checkbox-section">
+                                    <h3><span class="section-icon">🎯</span> Adaptações Necessárias</h3>
+                                    <p class="form-hint">Selecione todas as adaptações que se aplicam aos seus alunos</p>
+                                    
+                                    <div class="checkbox-group">
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="adaptDislexia" value="dislexia">
+                                            <div class="checkbox-label">
+                                                <div class="checkbox-title">Dislexia</div>
+                                                <div class="checkbox-description">Fonte legível, espaçamento maior, instruções claras</div>
+                                            </div>
+                                        </div>
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="adaptTEA" value="tea">
+                                            <div class="checkbox-label">
+                                                <div class="checkbox-title">TEA</div>
+                                                <div class="checkbox-description">Estrutura previsível, linguagem direta, menos distrações</div>
+                                            </div>
+                                        </div>
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="adaptTDAH" value="tdah">
+                                            <div class="checkbox-label">
+                                                <div class="checkbox-title">TDAH</div>
+                                                <div class="checkbox-description">Questões objetivas, instruções passo a passo</div>
+                                            </div>
+                                        </div>
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="adaptDiscalculia" value="discalculia">
+                                            <div class="checkbox-label">
+                                                <div class="checkbox-title">Discalculia</div>
+                                                <div class="checkbox-description">Problemas contextualizados, apoio visual</div>
+                                            </div>
+                                        </div>
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="adaptBaixaVisao" value="baixa-visao">
+                                            <div class="checkbox-label">
+                                                <div class="checkbox-title">Baixa Visão</div>
+                                                <div class="checkbox-description">Fonte ampliada, alto contraste, imagens descritivas</div>
+                                            </div>
+                                        </div>
+                                        <div class="checkbox-item">
+                                            <input type="checkbox" id="adaptOutros" value="outros">
+                                            <div class="checkbox-label">
+                                                <div class="checkbox-title">Outras Necessidades</div>
+                                                <div class="checkbox-description">Especifique necessidades específicas</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="outras-needs-container" id="outrasNeedsContainer">
+                                        <div class="form-group">
+                                            <label for="outrasNeeds" class="required">Especifique as necessidades:</label>
+                                            <textarea id="outrasNeeds" class="form-control" rows="3" 
+                                                      placeholder="Descreva detalhadamente as necessidades específicas dos alunos..."></textarea>
+                                            <div class="error-message" id="outras-needs-error">Por favor, descreva as outras necessidades</div>
+                                        </div>
+                                    </div>
+                                    <div class="error-message" id="adaptacoes-error">Selecione pelo menos uma adaptação</div>
+                                </div>
+                            </div>
+
+                            <!-- Seção 4: Instruções Especiais -->
+                            <div class="form-section">
+                                <h3><span class="section-icon">💡</span> Instruções Especiais (Opcional)</h3>
+                                <div class="form-group">
+                                    <label for="instrucoes">Observações para o processo de adaptação</label>
+                                    <textarea id="instrucoes" class="form-control" rows="4" 
+                                              placeholder="Ex: Manter o mesmo nível de dificuldade, incluir exemplos práticos, evitar linguagem complexa..."></textarea>
+                                    <div class="form-hint">Estas instruções ajudarão a IA a entender melhor suas necessidades</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-section">
-                        <h3>Adaptações Necessárias</h3>
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="adaptDislexia" value="dislexia">
-                                <label for="adaptDislexia">Dislexia</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="adaptTEA" value="tea">
-                                <label for="adaptTEA">TEA (Transtorno do Espectro Autista)</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="adaptTDAH" value="tdah">
-                                <label for="adaptTDAH">TDAH (Transtorno de Déficit de Atenção)</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="adaptDiscalculia" value="discalculia">
-                                <label for="adaptDiscalculia">Discalculia</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="adaptBaixaVisao" value="baixa-visao">
-                                <label for="adaptBaixaVisao">Baixa Visão</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="adaptOutros" value="outros">
-                                <label for="adaptOutros">Outras Necessidades</label>
-                            </div>
-                        </div>
-                        <div class="outras-needs-container" id="outrasNeedsContainer">
-                            <div class="form-group">
-                                <label for="outrasNeeds">Especifique as outras necessidades:</label>
-                                <input type="text" id="outrasNeeds" class="form-control" placeholder="Descreva as necessidades específicas...">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-section">
-                        <h3>Upload da Prova Original</h3>
-                        <div class="file-upload-area" id="fileUploadArea">
-                            <div class="file-icon">📄</div>
-                            <p>Arraste e solte o arquivo da prova aqui</p>
-                            <button class="btn-escola" id="selectFileBtn">Selecionar Arquivo</button>
-                            <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" style="display: none;">
-                            <div class="file-name" id="fileName"></div>
-                        </div>
-                    </div>
-
+                    <!-- Progresso -->
                     <div class="progress-container" id="progressContainer">
+                        <div class="progress-steps">
+                            <div class="progress-step active">Analisando</div>
+                            <div class="progress-step">Adaptando</div>
+                            <div class="progress-step">Revisando</div>
+                            <div class="progress-step">Finalizando</div>
+                        </div>
                         <div class="progress-bar">
                             <div class="progress" id="progressBar"></div>
                         </div>
-                        <p id="progressText">Processando prova...</p>
+                        <p id="progressText">Iniciando processamento da prova...</p>
                     </div>
 
-                    <button class="btn-escola" id="adaptarBtn" style="width: 100%; margin-top: 20px;">Adaptar Prova</button>
+                    <!-- Botão Principal -->
+                    <button class="btn-escola" id="adaptarBtn" style="width: 100%; margin-top: 30px;">
+                        <span>✨</span> Adaptar Prova Agora
+                    </button>
 
+                    <!-- Resultado -->
                     <div class="resultado-container" id="resultadoContainer">
                         <div class="resultado-card">
                             <div class="resultado-header">
-                                <div class="resultado-title">Prova Adaptada</div>
-                                <button class="btn-escola" id="downloadBtn">Download</button>
+                                <div class="resultado-title">
+                                    <span>✅</span> Prova Adaptada com Sucesso!
+                                    <span class="resultado-badge">PRONTO</span>
+                                </div>
+                                <div class="resultado-actions">
+                                    <button class="btn-escola btn-secondary" id="btn-nova-adaptacao">
+                                        <span>🔄</span> Nova
+                                    </button>
+                                    <button class="btn-escola btn-success" id="downloadBtn">
+                                        <span>📥</span> Download
+                                    </button>
+                                </div>
                             </div>
-                            <p>Sua prova foi adaptada com sucesso! Clique no botão para fazer o download.</p>
+                            
+                            <div class="adaptation-summary">
+                                <h4>Resumo da Adaptação</h4>
+                                <p><strong>Disciplina:</strong> <span id="resumo-disciplina"></span></p>
+                                <p><strong>Ano/Série:</strong> <span id="resumo-ano"></span></p>
+                                <p><strong>Adaptações Aplicadas:</strong> <span id="resumo-adaptacoes"></span></p>
+                                <p><strong>Data:</strong> <span id="resumo-data"></span></p>
+                            </div>
+
                             <div class="resultado-preview" id="resultadoPreview">
-                                <p>Prévia da prova adaptada aparecerá aqui...</p>
+                                <h4>Prévia das Adaptações Aplicadas:</h4>
+                                <div id="preview-content">
+                                    <!-- Conteúdo será preenchido via JavaScript -->
+                                </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Seção de Ajuda -->
+                <div class="help-section">
+                    <div class="help-title">
+                        <span>💡</span> Dicas para Melhores Resultados
+                    </div>
+                    <div class="help-content">
+                        <p>Para obter as melhores adaptações, recomendamos:</p>
+                        <ul class="help-tips">
+                            <li><strong>Seja específico nas necessidades</strong> - Quanto mais detalhes, melhor a adaptação</li>
+                            <li><strong>Use arquivos editáveis</strong> - Documentos Word permitem ajustes mais precisos</li>
+                            <li><strong>Revise o resultado</strong> - Sempre confira se as adaptações atenderam suas expectativas</li>
+                            <li><strong>Considere o tempo</strong> - Processos complexos podem levar alguns minutos</li>
+                        </ul>
                     </div>
                 </div>
             </main>
@@ -696,6 +1100,7 @@
         // ✅ GERENCIADOR PRINCIPAL DA ADAPTAÇÃO
         class AdaptacaoManager {
             constructor() {
+                this.rascunhoSalvo = false;
                 this.init();
             }
 
@@ -706,6 +1111,8 @@
                 this.setupFileUpload();
                 this.setupOutrasNecessidades();
                 this.setupAdaptationProcess();
+                this.setupRascunho();
+                this.carregarRascunho();
             }
 
             checkAuthentication() {
@@ -734,22 +1141,6 @@
                         this.navigateToMenu(menuId);
                     });
                 });
-            }
-
-            setupMenuNavigation() {
-                document.querySelectorAll('.menu-item, .mobile-menu-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                
-                const currentMenuDesktop = document.querySelector('[data-menu="6"]');
-                const currentMenuMobile = document.querySelector('.mobile-menu-item[data-menu="6"]');
-                
-                if (currentMenuDesktop) {
-                    currentMenuDesktop.classList.add('active');
-                }
-                if (currentMenuMobile) {
-                    currentMenuMobile.classList.add('active');
-                }
             }
 
             navigateToMenu(menuId) {
@@ -796,7 +1187,14 @@
                 // Atualizar nome do arquivo selecionado
                 fileInput.addEventListener('change', () => {
                     if (fileInput.files.length > 0) {
-                        fileName.textContent = fileInput.files[0].name;
+                        const file = fileInput.files[0];
+                        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+                        fileName.innerHTML = `
+                            <span>📄 ${file.name}</span>
+                            <span class="file-size">(${fileSize} MB)</span>
+                            <span class="file-remove" onclick="adaptacaoManager.removerArquivo()">🗑️</span>
+                        `;
+                        this.validarArquivo(file);
                     } else {
                         fileName.textContent = '';
                     }
@@ -818,9 +1216,45 @@
                     
                     if (e.dataTransfer.files.length > 0) {
                         fileInput.files = e.dataTransfer.files;
-                        fileName.textContent = fileInput.files[0].name;
+                        const file = fileInput.files[0];
+                        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+                        fileName.innerHTML = `
+                            <span>📄 ${file.name}</span>
+                            <span class="file-size">(${fileSize} MB)</span>
+                            <span class="file-remove" onclick="adaptacaoManager.removerArquivo()">🗑️</span>
+                        `;
+                        this.validarArquivo(file);
                     }
                 });
+            }
+
+            validarArquivo(file) {
+                const errorElement = document.getElementById('arquivo-error');
+                const formatosPermitidos = ['.pdf', '.doc', '.docx', '.txt'];
+                const maxSize = 10 * 1024 * 1024; // 10MB
+
+                const extensao = '.' + file.name.split('.').pop().toLowerCase();
+                
+                if (!formatosPermitidos.includes(extensao)) {
+                    errorElement.textContent = 'Formato de arquivo não suportado. Use PDF, DOC, DOCX ou TXT.';
+                    errorElement.style.display = 'block';
+                    return false;
+                }
+
+                if (file.size > maxSize) {
+                    errorElement.textContent = 'Arquivo muito grande. O tamanho máximo é 10MB.';
+                    errorElement.style.display = 'block';
+                    return false;
+                }
+
+                errorElement.style.display = 'none';
+                return true;
+            }
+
+            removerArquivo() {
+                document.getElementById('fileInput').value = '';
+                document.getElementById('fileName').textContent = '';
+                document.getElementById('arquivo-error').style.display = 'none';
             }
 
             setupOutrasNecessidades() {
@@ -832,8 +1266,137 @@
                         outrasContainer.style.display = 'block';
                     } else {
                         outrasContainer.style.display = 'none';
+                        document.getElementById('outrasNeeds').value = '';
                     }
                 });
+            }
+
+            setupRascunho() {
+                document.getElementById('btn-salvar-rascunho').addEventListener('click', () => {
+                    this.salvarRascunho();
+                });
+
+                document.getElementById('btn-limpar').addEventListener('click', () => {
+                    this.limparFormulario();
+                });
+            }
+
+            salvarRascunho() {
+                const rascunho = {
+                    disciplina: document.getElementById('provaDisciplina').value,
+                    ano: document.getElementById('provaAno').value,
+                    titulo: document.getElementById('provaTitulo').value,
+                    adaptacoes: this.obterAdaptacoesSelecionadas(),
+                    outrasNeeds: document.getElementById('outrasNeeds').value,
+                    instrucoes: document.getElementById('instrucoes').value,
+                    timestamp: new Date().toISOString()
+                };
+
+                localStorage.setItem('rascunho_adaptacao', JSON.stringify(rascunho));
+                this.rascunhoSalvo = true;
+                
+                // Feedback visual
+                const btn = document.getElementById('btn-salvar-rascunho');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>✅</span> Salvo!';
+                btn.disabled = true;
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
+
+            carregarRascunho() {
+                const rascunho = localStorage.getItem('rascunho_adaptacao');
+                if (rascunho) {
+                    const dados = JSON.parse(rascunho);
+                    
+                    document.getElementById('provaDisciplina').value = dados.disciplina || '';
+                    document.getElementById('provaAno').value = dados.ano || '';
+                    document.getElementById('provaTitulo').value = dados.titulo || '';
+                    document.getElementById('outrasNeeds').value = dados.outrasNeeds || '';
+                    document.getElementById('instrucoes').value = dados.instrucoes || '';
+                    
+                    // Restaurar checkboxes
+                    if (dados.adaptacoes) {
+                        dados.adaptacoes.forEach(adaptacao => {
+                            const checkbox = document.getElementById(`adapt${adaptacao}`);
+                            if (checkbox) checkbox.checked = true;
+                        });
+                    }
+                    
+                    if (dados.adaptacoes && dados.adaptacoes.includes('Outros')) {
+                        document.getElementById('outrasNeedsContainer').style.display = 'block';
+                    }
+                    
+                    this.rascunhoSalvo = true;
+                }
+            }
+
+            obterAdaptacoesSelecionadas() {
+                const adaptacoes = [];
+                document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                    adaptacoes.push(cb.value);
+                });
+                return adaptacoes;
+            }
+
+            validarFormulario() {
+                let valido = true;
+
+                // Validar disciplina
+                const disciplina = document.getElementById('provaDisciplina').value.trim();
+                if (!disciplina) {
+                    document.getElementById('disciplina-error').style.display = 'block';
+                    document.getElementById('provaDisciplina').classList.add('error');
+                    valido = false;
+                } else {
+                    document.getElementById('disciplina-error').style.display = 'none';
+                    document.getElementById('provaDisciplina').classList.remove('error');
+                }
+
+                // Validar ano/série
+                const ano = document.getElementById('provaAno').value;
+                if (!ano) {
+                    document.getElementById('ano-error').style.display = 'block';
+                    document.getElementById('provaAno').classList.add('error');
+                    valido = false;
+                } else {
+                    document.getElementById('ano-error').style.display = 'none';
+                    document.getElementById('provaAno').classList.remove('error');
+                }
+
+                // Validar arquivo
+                const arquivo = document.getElementById('fileInput').files[0];
+                if (!arquivo) {
+                    document.getElementById('arquivo-error').style.display = 'block';
+                    valido = false;
+                } else if (!this.validarArquivo(arquivo)) {
+                    valido = false;
+                }
+
+                // Validar adaptações
+                const adaptacoes = this.obterAdaptacoesSelecionadas();
+                if (adaptacoes.length === 0) {
+                    document.getElementById('adaptacoes-error').style.display = 'block';
+                    valido = false;
+                } else {
+                    document.getElementById('adaptacoes-error').style.display = 'none';
+                }
+
+                // Validar "outras necessidades" se selecionado
+                if (document.getElementById('adaptOutros').checked) {
+                    const outrasNeeds = document.getElementById('outrasNeeds').value.trim();
+                    if (!outrasNeeds) {
+                        document.getElementById('outras-needs-error').style.display = 'block';
+                        valido = false;
+                    } else {
+                        document.getElementById('outras-needs-error').style.display = 'none';
+                    }
+                }
+
+                return valido;
             }
 
             setupAdaptationProcess() {
@@ -843,91 +1406,202 @@
                 const progressText = document.getElementById('progressText');
                 const resultadoContainer = document.getElementById('resultadoContainer');
                 const downloadBtn = document.getElementById('downloadBtn');
-                const resultadoPreview = document.getElementById('resultadoPreview');
+                const btnNovaAdaptacao = document.getElementById('btn-nova-adaptacao');
 
                 adaptarBtn.addEventListener('click', () => {
-                    const fileInput = document.getElementById('fileInput');
-                    const provaDisciplina = document.getElementById('provaDisciplina').value;
-                    const provaAno = document.getElementById('provaAno').value;
-
-                    // Verificar se há arquivo selecionado
-                    if (!fileInput.files.length) {
-                        alert('Por favor, selecione um arquivo de prova.');
+                    if (!this.validarFormulario()) {
+                        // Scroll para o primeiro erro
+                        const primeiroErro = document.querySelector('.error-message[style*="display: block"]');
+                        if (primeiroErro) {
+                            primeiroErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                         return;
                     }
 
-                    // Verificar se há disciplina
-                    if (!provaDisciplina.trim()) {
-                        alert('Por favor, informe a disciplina.');
-                        return;
-                    }
-
-                    // Verificar se há adaptações selecionadas
-                    const adaptacoes = document.querySelectorAll('input[type="checkbox"]:checked');
-                    if (adaptacoes.length === 0) {
-                        alert('Por favor, selecione pelo menos uma adaptação necessária.');
-                        return;
-                    }
-
-                    // Verificar se "Outras Necessidades" foi selecionado sem especificação
-                    const outrasCheckbox = document.getElementById('adaptOutros');
-                    const outrasNeeds = document.getElementById('outrasNeeds').value;
-                    if (outrasCheckbox.checked && !outrasNeeds.trim()) {
-                        alert('Por favor, especifique as outras necessidades.');
-                        return;
-                    }
+                    // Desabilitar botão durante o processamento
+                    adaptarBtn.disabled = true;
+                    adaptarBtn.innerHTML = '<span>⏳</span> Processando...';
 
                     // Mostrar progresso
                     progressContainer.style.display = 'block';
                     resultadoContainer.style.display = 'none';
 
-                    // Simular processamento
-                    let progress = 0;
+                    // Simular processamento com etapas
+                    const etapas = [
+                        { texto: 'Analisando a prova original...', progresso: 25 },
+                        { texto: 'Aplicando adaptações para Dislexia...', progresso: 40 },
+                        { texto: 'Adaptando para TDAH...', progresso: 60 },
+                        { texto: 'Otimizando layout e acessibilidade...', progresso: 80 },
+                        { texto: 'Revisando e finalizando...', progresso: 95 },
+                        { texto: 'Adaptação concluída!', progresso: 100 }
+                    ];
+
+                    let etapaAtual = 0;
                     const interval = setInterval(() => {
-                        progress += Math.random() * 10;
-                        if (progress >= 100) {
-                            progress = 100;
+                        if (etapaAtual < etapas.length) {
+                            const etapa = etapas[etapaAtual];
+                            progressBar.style.width = `${etapa.progresso}%`;
+                            progressText.textContent = etapa.texto;
+                            
+                            // Atualizar steps
+                            document.querySelectorAll('.progress-step').forEach((step, index) => {
+                                if (index <= etapaAtual) {
+                                    step.classList.add('active');
+                                } else {
+                                    step.classList.remove('active');
+                                }
+                            });
+                            
+                            etapaAtual++;
+                        } else {
                             clearInterval(interval);
                             
-                            // Mostrar resultado após processamento
+                            // Mostrar resultado
                             setTimeout(() => {
                                 progressContainer.style.display = 'none';
                                 resultadoContainer.style.display = 'block';
+                                adaptarBtn.disabled = false;
+                                adaptarBtn.innerHTML = '<span>✨</span> Adaptar Prova Agora';
                                 
-                                // Simular conteúdo da prova adaptada
-                                const adaptacoesText = Array.from(adaptacoes).map(cb => {
-                                    if (cb.id === 'adaptOutros') {
-                                        return `Outras Necessidades: ${outrasNeeds}`;
-                                    }
-                                    const label = document.querySelector(`label[for="${cb.id}"]`);
-                                    return label ? label.textContent : cb.value;
-                                }).join(', ');
+                                this.mostrarResultado();
                                 
-                                resultadoPreview.innerHTML = `
-                                    <h4>Prova de ${provaDisciplina} - Adaptada</h4>
-                                    <p><strong>Ano/Série:</strong> ${provaAno}</p>
-                                    <p><strong>Adaptações aplicadas:</strong> ${adaptacoesText}</p>
-                                    <hr>
-                                    <p>Aqui estaria o conteúdo da prova adaptada conforme as necessidades selecionadas.</p>
-                                    <p>Exemplo de adaptação para dislexia: texto com fonte mais legível, espaçamento maior entre linhas, instruções mais claras e diretas.</p>
-                                    <p>Exemplo de adaptação para TDAH: questões mais objetivas, redução de distratores visuais, instruções passo a passo.</p>
-                                `;
-                            }, 500);
+                                // Scroll para o resultado
+                                resultadoContainer.scrollIntoView({ behavior: 'smooth' });
+                            }, 1000);
                         }
-                        
-                        progressBar.style.width = `${progress}%`;
-                        progressText.textContent = `Processando prova... ${Math.round(progress)}%`;
-                    }, 300);
+                    }, 800);
                 });
 
-                // Simular download
-                downloadBtn.addEventListener('click', () => {
-                    alert('Download da prova adaptada iniciado! Em uma implementação real, o arquivo seria baixado.');
+                // Nova adaptação
+                btnNovaAdaptacao.addEventListener('click', () => {
+                    this.limparFormulario();
+                    resultadoContainer.style.display = 'none';
+                    document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
                 });
+
+                // Download
+                downloadBtn.addEventListener('click', () => {
+                    this.simularDownload();
+                });
+            }
+
+            mostrarResultado() {
+                // Preencher resumo
+                document.getElementById('resumo-disciplina').textContent = document.getElementById('provaDisciplina').value;
+                document.getElementById('resumo-ano').textContent = document.getElementById('provaAno').value;
+                document.getElementById('resumo-data').textContent = new Date().toLocaleDateString('pt-BR');
+                
+                // Listar adaptações
+                const adaptacoes = this.obterAdaptacoesSelecionadas();
+                const adaptacoesText = adaptacoes.map(adapt => {
+                    const labels = {
+                        'dislexia': 'Dislexia',
+                        'tea': 'TEA (Transtorno do Espectro Autista)',
+                        'tdah': 'TDAH (Transtorno de Déficit de Atenção)',
+                        'discalculia': 'Discalculia',
+                        'baixa-visao': 'Baixa Visão',
+                        'outros': `Outras Necessidades: ${document.getElementById('outrasNeeds').value}`
+                    };
+                    return labels[adapt] || adapt;
+                }).join(', ');
+                
+                document.getElementById('resumo-adaptacoes').textContent = adaptacoesText;
+
+                // Gerar preview
+                const previewContent = document.getElementById('preview-content');
+                previewContent.innerHTML = this.gerarPreviewAdaptacoes(adaptacoes);
+            }
+
+            gerarPreviewAdaptacoes(adaptacoes) {
+                let html = '<div class="preview-adaptations">';
+                
+                adaptacoes.forEach(adapt => {
+                    const details = {
+                        'dislexia': '• Fonte Arial 14pt com espaçamento 1.5<br>• Instruções claras e diretas<br>• Texto justificado à esquerda',
+                        'tea': '• Estrutura previsível e consistente<br>• Linguagem literal e objetiva<br>• Redução de estímulos visuais',
+                        'tdah': '• Questões objetivas e concisas<br>• Instruções passo a passo<br>• Espaço para respostas ampliado',
+                        'discalculia': '• Problemas contextualizados<br>• Uso de recursos visuais<br>• Calculadora permitida',
+                        'baixa-visao': '• Fonte ampliada (16pt)<br>• Alto contraste preto/branco<br>• Imagens com descrição textual',
+                        'outros': `• ${document.getElementById('outrasNeeds').value}`
+                    };
+                    
+                    if (details[adapt]) {
+                        html += `
+                            <div class="preview-item">
+                                <strong>${this.getAdaptacaoNome(adapt)}:</strong>
+                                <div class="preview-details">${details[adapt]}</div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div>';
+                return html;
+            }
+
+            getAdaptacaoNome(codigo) {
+                const nomes = {
+                    'dislexia': 'Adaptações para Dislexia',
+                    'tea': 'Adaptações para TEA',
+                    'tdah': 'Adaptações para TDAH',
+                    'discalculia': 'Adaptações para Discalculia',
+                    'baixa-visao': 'Adaptações para Baixa Visão',
+                    'outros': 'Outras Adaptações Específicas'
+                };
+                return nomes[codigo] || codigo;
+            }
+
+            simularDownload() {
+                // Feedback visual
+                const btn = document.getElementById('downloadBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>⏳</span> Baixando...';
+                btn.disabled = true;
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    
+                    // Simular download
+                    alert('✅ Download da prova adaptada iniciado!\n\nEm uma implementação real, o arquivo adaptado seria baixado automaticamente.');
+                }, 2000);
+            }
+
+            limparFormulario() {
+                // Limpar campos
+                document.getElementById('provaDisciplina').value = '';
+                document.getElementById('provaAno').value = '';
+                document.getElementById('provaTitulo').value = '';
+                document.getElementById('fileInput').value = '';
+                document.getElementById('fileName').textContent = '';
+                document.getElementById('outrasNeeds').value = '';
+                document.getElementById('instrucoes').value = '';
+                
+                // Limpar checkboxes
+                document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    cb.checked = false;
+                });
+                
+                // Ocultar campo de outras necessidades
+                document.getElementById('outrasNeedsContainer').style.display = 'none';
+                
+                // Limpar erros
+                document.querySelectorAll('.error-message').forEach(error => {
+                    error.style.display = 'none';
+                });
+                
+                document.querySelectorAll('.form-control.error').forEach(input => {
+                    input.classList.remove('error');
+                });
+                
+                // Remover rascunho
+                localStorage.removeItem('rascunho_adaptacao');
+                this.rascunhoSalvo = false;
             }
         }
 
         // Inicializar quando a página carregar
+        let adaptacaoManager;
         document.addEventListener('DOMContentLoaded', () => {
             const currentUser = localStorage.getItem('currentUser');
             if (!currentUser) {
@@ -935,7 +1609,7 @@
                 return;
             }
             
-            new AdaptacaoManager();
+            adaptacaoManager = new AdaptacaoManager();
         });
     </script>
 </body>
