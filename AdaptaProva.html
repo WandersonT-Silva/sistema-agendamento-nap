@@ -1055,7 +1055,7 @@
                     </div>
 
                     <!-- Configuração da API -->
-                    <div class="api-config-section">
+                    <div class="api-config-section" id="apiConfigSection">
                         <button class="api-config-toggle" id="apiConfigToggle">
                             <span>⚙️</span> Configuração do OpenRouter (DeepSeek Chat v3.1 - Gratuito)
                         </button>
@@ -1197,7 +1197,8 @@
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${this.apiKey}`,
                             'HTTP-Referer': this.siteUrl,
-                            'X-Title': this.siteName
+                            'X-Title': this.siteName,
+                            'Origin': this.siteUrl
                         },
                         body: JSON.stringify({
                             model: this.modelGratuito,
@@ -1208,18 +1209,30 @@
                                 }
                             ],
                             max_tokens: 5
-                        })
+                        }),
+                        mode: 'cors',
+                        credentials: 'omit'
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(`Erro API: ${errorData.error?.message || response.status}`);
+                        const errorText = await response.text();
+                        let errorMessage = `Erro HTTP: ${response.status}`;
+                        
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            errorMessage = errorData.error?.message || errorMessage;
+                        } catch {
+                            errorMessage = errorText || errorMessage;
+                        }
+                        
+                        throw new Error(errorMessage);
                     }
 
+                    const data = await response.json();
                     return true;
                 } catch (error) {
                     console.error('Erro teste conexão:', error);
-                    throw new Error('Falha na conexão com OpenRouter');
+                    throw new Error(`Falha na conexão: ${error.message}`);
                 }
             }
 
@@ -1237,7 +1250,8 @@
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${this.apiKey}`,
                             'HTTP-Referer': this.siteUrl,
-                            'X-Title': this.siteName
+                            'X-Title': this.siteName,
+                            'Origin': this.siteUrl
                         },
                         body: JSON.stringify({
                             model: this.modelGratuito,
@@ -1254,12 +1268,23 @@
                             temperature: 0.3,
                             max_tokens: 4000,
                             stream: false
-                        })
+                        }),
+                        mode: 'cors',
+                        credentials: 'omit'
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(`Erro API (${response.status}): ${errorData.error?.message || 'Erro desconhecido'}`);
+                        const errorText = await response.text();
+                        let errorMessage = `Erro HTTP: ${response.status}`;
+                        
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            errorMessage = errorData.error?.message || errorMessage;
+                        } catch {
+                            errorMessage = errorText || errorMessage;
+                        }
+                        
+                        throw new Error(errorMessage);
                     }
 
                     const data = await response.json();
@@ -1522,7 +1547,7 @@ PROVA ADAPTADA (em HTML dentro do modelo exato da escola):
         // ✅ GERENCIADOR PRINCIPAL
         class AdaptacaoManager {
             constructor() {
-                this.openRouterService = new OpenRouterService(); // CORRIGIDO: OpenRouterService
+                this.openRouterService = new OpenRouterService();
                 this.fileProcessor = new FileProcessor();
                 this.provaAdaptadaHTML = null;
                 this.init();
@@ -1530,6 +1555,7 @@ PROVA ADAPTADA (em HTML dentro do modelo exato da escola):
 
             init() {
                 this.checkAuthentication();
+                this.verificarAcessoAdmin();
                 this.carregarConfiguracoes();
                 this.setupMenuNavigation();
                 this.setupMobileMenu();
@@ -1539,10 +1565,25 @@ PROVA ADAPTADA (em HTML dentro do modelo exato da escola):
                 this.setupAdaptationProcess();
             }
 
+            verificarAcessoAdmin() {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const emailUsuario = currentUser.email || '';
+                const apiConfigSection = document.getElementById('apiConfigSection');
+                
+                // Apenas wandeson_silva@santoantonio.edu.br vê a configuração
+                if (emailUsuario === 'wandeson_silva@santoantonio.edu.br') {
+                    apiConfigSection.style.display = 'block';
+                } else {
+                    apiConfigSection.style.display = 'none';
+                    // Usa a chave padrão automaticamente para outros usuários
+                    this.openRouterService.setApiKey('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');
+                }
+            }
+
             carregarConfiguracoes() {
-                const apiKeySalva = localStorage.getItem('openRouterApiKey'); // CORRIGIDO: openRouterApiKey
+                const apiKeySalva = localStorage.getItem('openRouterApiKey');
                 if (apiKeySalva) {
-                    document.getElementById('openRouterApiKey').value = apiKeySalva; // CORRIGIDO: openRouterApiKey
+                    document.getElementById('openRouterApiKey').value = apiKeySalva;
                     this.openRouterService.setApiKey(apiKeySalva);
                 } else {
                     // Usa a chave gratuita fornecida
@@ -1765,10 +1806,15 @@ PROVA ADAPTADA (em HTML dentro do modelo exato da escola):
                     this.ocultarErro('adaptacoes-error');
                 }
 
-                // Validar API Key
-                if (!this.openRouterService.apiKey) { // CORRIGIDO: openRouterService
-                    this.mostrarErro('api-key-error', 'Configure sua API Key do OpenRouter'); // CORRIGIDO: OpenRouter
-                    valido = false;
+                // Validar outras necessidades se marcado
+                if (document.getElementById('adaptOutros').checked) {
+                    const outrasNeeds = document.getElementById('outrasNeeds').value.trim();
+                    if (!outrasNeeds) {
+                        this.mostrarErro('outras-needs-error', 'Por favor, descreva as outras necessidades');
+                        valido = false;
+                    } else {
+                        this.ocultarErro('outras-needs-error');
+                    }
                 }
 
                 return valido;
@@ -1844,8 +1890,16 @@ PROVA ADAPTADA (em HTML dentro do modelo exato da escola):
                     await this.executarEtapa('Extraindo texto da prova...', 20);
                     const textoProva = await this.fileProcessor.extrairTexto(arquivo);
                     
-                    await this.executarEtapa('Enviando para DeepSeek Chat v3.1...', 40); // CORRIGIDO: DeepSeek
-                    const provaAdaptadaHTML = await this.openRouterService.adaptarProva( // CORRIGIDO: openRouterService
+                    // Teste de conexão antes de processar
+                    await this.executarEtapa('Verificando conexão com IA...', 40);
+                    try {
+                        await this.openRouterService.testConnection();
+                    } catch (error) {
+                        throw new Error(`Falha na conexão com a IA: ${error.message}`);
+                    }
+                    
+                    await this.executarEtapa('Adaptando prova com DeepSeek Chat v3.1...', 60);
+                    const provaAdaptadaHTML = await this.openRouterService.adaptarProva(
                         textoProva, adaptacoes, instrucoes, dadosProva
                     );
                     
@@ -1889,7 +1943,35 @@ PROVA ADAPTADA (em HTML dentro do modelo exato da escola):
             mostrarErroProcessamento(mensagem) {
                 const progressContainer = document.getElementById('progressContainer');
                 progressContainer.style.display = 'none';
-                alert('❌ Erro no processamento: ' + mensagem);
+                
+                // Mostrar erro de forma mais amigável
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    background: #FEF2F2;
+                    border: 2px solid #FECACA;
+                    color: #DC2626;
+                    padding: 20px;
+                    border-radius: 10px;
+                    margin: 20px 0;
+                    text-align: center;
+                `;
+                errorDiv.innerHTML = `
+                    <h3 style="margin: 0 0 10px 0; color: #DC2626;">❌ Erro no Processamento</h3>
+                    <p style="margin: 0;">${mensagem}</p>
+                    <button onclick="this.parentElement.remove()" style="
+                        background: #DC2626;
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 6px;
+                        margin-top: 10px;
+                        cursor: pointer;
+                    ">Fechar</button>
+                `;
+                
+                const formContainer = document.querySelector('.form-container');
+                formContainer.appendChild(errorDiv);
+                errorDiv.scrollIntoView({ behavior: 'smooth' });
             }
 
             mostrarResultado(provaAdaptadaHTML) {
@@ -1988,6 +2070,14 @@ PROVA ADAPTADA (em HTML dentro do modelo exato da escola):
             if (!currentUser) {
                 window.location.href = BASE_URL + '/index.html';
                 return;
+            }
+            
+            // Verificar se é o usuário admin
+            const userData = JSON.parse(currentUser);
+            if (userData.email === 'wandeson_silva@santoantonio.edu.br') {
+                console.log('✅ Acesso administrativo detectado - Configuração de API disponível');
+            } else {
+                console.log('✅ Acesso padrão - Usando chave API pré-configurada');
             }
             
             adaptacaoManager = new AdaptacaoManager();
