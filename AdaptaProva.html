@@ -7,6 +7,11 @@
     <link rel="icon" type="image/png" sizes="32x32" href="logo.png">
     <link rel="icon" type="image/png" sizes="16x16" href="logo.png">
     <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
+    
+    <!-- Bibliotecas para processamento de arquivos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.17/mammoth.browser.min.js"></script>
+    
     <style>
         /* ===== TEMA ESCOLA - SANTO ANTÔNIO ===== */
         :root {
@@ -678,6 +683,36 @@
             margin-bottom: 8px;
         }
 
+        /* ===== CONFIGURAÇÃO API ===== */
+        .api-config-section {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(255, 107, 53, 0.1) 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid var(--dourado);
+        }
+
+        .api-config-toggle {
+            background: none;
+            border: none;
+            color: var(--azul-marinho);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .api-config-content {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .api-config-content.show {
+            display: block;
+        }
+
         /* ===== MEDIA QUERIES ===== */
         @media (max-width: 1024px) {
             .sidebar {
@@ -753,6 +788,37 @@
 
         .checkbox-item.error {
             border-color: var(--vermelho);
+        }
+
+        /* ===== PREVIEW DA PROVA ===== */
+        .prova-preview {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .prova-preview h1, .prova-preview h2, .prova-preview h3 {
+            color: var(--azul-marinho);
+            margin-bottom: 15px;
+        }
+
+        .prova-preview .questao {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--laranja);
+        }
+
+        .prova-preview .alternativas {
+            margin-top: 10px;
+        }
+
+        .prova-preview .alternativa {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -841,14 +907,14 @@
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Adaptação de Provas</h1>
-                        <p class="page-subtitle">Adapte avaliações para alunos com necessidades especiais</p>
+                        <p class="page-subtitle">Adapte avaliações para alunos com necessidades especiais usando IA</p>
                     </div>
                 </div>
 
                 <div class="form-container">
                     <div class="form-header">
                         <h2>Nova Adaptação de Prova</h2>
-                        <p>Preencha as informações abaixo para adaptar sua prova</p>
+                        <p>Preencha as informações abaixo para adaptar sua prova com IA</p>
                     </div>
 
                     <div class="form-sections">
@@ -988,12 +1054,35 @@
                         </div>
                     </div>
 
+                    <!-- Configuração da API -->
+                    <div class="api-config-section">
+                        <button class="api-config-toggle" id="apiConfigToggle">
+                            <span>⚙️</span> Configuração da API DeepSeek
+                        </button>
+                        <div class="api-config-content" id="apiConfigContent">
+                            <div class="form-group">
+                                <label for="deepseekApiKey" class="required">API Key do DeepSeek</label>
+                                <input type="password" id="deepseekApiKey" class="form-control" 
+                                       placeholder="Cole sua API Key aqui..."
+                                       value="">
+                                <div class="form-hint">
+                                    Obtenha sua API Key em: 
+                                    <a href="https://platform.deepseek.com/api_keys" target="_blank">https://platform.deepseek.com/api_keys</a>
+                                </div>
+                                <div class="error-message" id="api-key-error">Por favor, informe uma API Key válida</div>
+                            </div>
+                            <button class="btn-escola btn-secondary" id="testApiKeyBtn" style="width: auto; padding: 10px 20px;">
+                                <span>🔍</span> Testar API Key
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Progresso -->
                     <div class="progress-container" id="progressContainer">
                         <div class="progress-steps">
                             <div class="progress-step active">Analisando</div>
+                            <div class="progress-step">Processando</div>
                             <div class="progress-step">Adaptando</div>
-                            <div class="progress-step">Revisando</div>
                             <div class="progress-step">Finalizando</div>
                         </div>
                         <div class="progress-bar">
@@ -1004,7 +1093,7 @@
 
                     <!-- Botão Principal -->
                     <button class="btn-escola" id="adaptarBtn" style="width: 100%; margin-top: 30px;">
-                        <span>✨</span> Adaptar Prova Agora
+                        <span>✨</span> Adaptar Prova com IA
                     </button>
 
                     <!-- Resultado -->
@@ -1034,8 +1123,8 @@
                             </div>
 
                             <div class="resultado-preview" id="resultadoPreview">
-                                <h4>Prévia das Adaptações Aplicadas:</h4>
-                                <div id="preview-content">
+                                <h4>Prévia da Prova Adaptada:</h4>
+                                <div id="preview-content" class="prova-preview">
                                     <!-- Conteúdo será preenchido via JavaScript -->
                                 </div>
                             </div>
@@ -1049,12 +1138,13 @@
                         <span>💡</span> Dicas para Melhores Resultados
                     </div>
                     <div class="help-content">
-                        <p>Para obter as melhores adaptações, recomendamos:</p>
+                        <p>Para obter as melhores adaptações com IA, recomendamos:</p>
                         <ul class="help-tips">
-                            <li><strong>Seja específico nas necessidades</strong> - Quanto mais detalhes, melhor a adaptação</li>
-                            <li><strong>Use arquivos editáveis</strong> - Documentos Word permitem ajustes mais precisos</li>
+                            <li><strong>Use arquivos editáveis</strong> - Documentos Word (.docx) permitem extração de texto mais precisa</li>
+                            <li><strong>Seja específico nas necessidades</strong> - Quanto mais detalhes, melhor a adaptação da IA</li>
                             <li><strong>Revise o resultado</strong> - Sempre confira se as adaptações atenderam suas expectativas</li>
-                            <li><strong>Considere o tempo</strong> - Processos complexos podem levar alguns minutos</li>
+                            <li><strong>Considere o tempo</strong> - Processos com IA podem levar alguns minutos</li>
+                            <li><strong>Teste a API Key</strong> - Certifique-se de que sua chave está funcionando antes de usar</li>
                         </ul>
                     </div>
                 </div>
@@ -1066,19 +1156,323 @@
         // ✅ CONFIGURAÇÃO DE URLS ABSOLUTAS
         const BASE_URL = 'https://wandersont-silva.github.io/sistema-agendamento-nap';
 
-        // ✅ GERENCIADOR PRINCIPAL DA ADAPTAÇÃO
+        // ✅ SERVIÇO DEEPSEEK
+        class DeepSeekService {
+            constructor() {
+                this.apiKey = localStorage.getItem('deepseekApiKey') || '';
+                this.apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+            }
+
+            setApiKey(apiKey) {
+                this.apiKey = apiKey;
+                localStorage.setItem('deepseekApiKey', apiKey);
+            }
+
+            async testConnection() {
+                if (!this.apiKey) {
+                    throw new Error('API Key não configurada');
+                }
+
+                try {
+                    const response = await fetch(this.apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "deepseek-chat",
+                            messages: [
+                                {
+                                    role: "user",
+                                    content: "Responda apenas com 'OK' se estiver funcionando."
+                                }
+                            ],
+                            max_tokens: 5
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Erro API: ${response.status}`);
+                    }
+
+                    return true;
+                } catch (error) {
+                    console.error('Erro teste conexão:', error);
+                    throw new Error('Falha na conexão com a API DeepSeek');
+                }
+            }
+
+            async adaptarProva(provaTexto, adaptacoes, instrucoesEspeciais, dadosProva) {
+                if (!this.apiKey) {
+                    throw new Error('API Key não configurada. Configure na seção de configurações.');
+                }
+
+                const prompt = this.criarPromptCompleto(provaTexto, adaptacoes, instrucoesEspeciais, dadosProva);
+                
+                try {
+                    const response = await fetch(this.apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "deepseek-chat",
+                            messages: [
+                                {
+                                    role: "system",
+                                    content: this.criarInstrucoesSistema()
+                                },
+                                {
+                                    role: "user",
+                                    content: prompt
+                                }
+                            ],
+                            temperature: 0.3,
+                            max_tokens: 4000,
+                            stream: false
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(`Erro API (${response.status}): ${errorData.error?.message || 'Erro desconhecido'}`);
+                    }
+
+                    const data = await response.json();
+                    return data.choices[0].message.content;
+                    
+                } catch (error) {
+                    console.error('Erro na adaptação:', error);
+                    throw error;
+                }
+            }
+
+            criarInstrucoesSistema() {
+                return `Você é um especialista em educação inclusiva do Colégio Santo Antônio. Sua missão é adaptar provas mantendo:
+
+1. PADRÃO VISUAL DA ESCOLA: Use o modelo fornecido
+2. QUALIDADE PEDAGÓGICA: Mantenha o conteúdo educativo original
+3. ADAPTAÇÕES INCLUSIVAS: Aplique técnicas comprovadas
+4. FORMATAÇÃO: Retorne HTML limpo e sem marcação
+
+IMPORTANTE: Sempre use o modelo da escola e adapte conforme solicitado.`;
+            }
+
+            criarPromptCompleto(provaTexto, adaptacoes, instrucoesEspeciais, dadosProva) {
+                const instrucoesAdaptacao = this.criarInstrucoesAdaptacao(adaptacoes);
+                
+                return `
+# ADAPTAÇÃO DE PROVA - COLÉGIO SANTO ANTÔNIO
+
+## DADOS DA PROVA:
+- DISCIPLINA: ${dadosProva.disciplina}
+- ANO/SÉRIE: ${dadosProva.ano}
+- TÍTULO: ${dadosProva.titulo || 'Avaliação Adaptada'}
+
+## ADAPTAÇÕES SOLICITADAS:
+${instrucoesAdaptacao}
+
+## INSTRUÇÕES ESPECIAIS:
+${instrucoesEspeciais || 'Nenhuma instrução adicional'}
+
+## TEXTO ORIGINAL DA PROVA:
+${provaTexto}
+
+## MODELO DA ESCOLA:
+
+<div style="font-family: Arial, sans-serif; max-width: 210mm; margin: 0 auto; padding: 20px; background: white;">
+    <div style="text-align: center; border-bottom: 3px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 25px;">
+        <h1 style="color: #1E3A8A; margin: 0; font-size: 24px;">COLÉGIO SANTO ANTÔNIO</h1>
+        <p style="color: #6B7280; margin: 5px 0 0 0; font-size: 14px;">Educação que transforma vidas</p>
+    </div>
+
+    <div style="background: #F8FAFC; padding: 15px; border-radius: 8px; border-left: 4px solid #D4AF37; margin-bottom: 20px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 5px; width: 30%;"><strong>Disciplina:</strong></td><td style="padding: 5px;">${dadosProva.disciplina}</td></tr>
+            <tr><td style="padding: 5px;"><strong>Ano/Série:</strong></td><td style="padding: 5px;">${dadosProva.ano}</td></tr>
+            <tr><td style="padding: 5px;"><strong>Data:</strong></td><td style="padding: 5px;">${new Date().toLocaleDateString('pt-BR')}</td></tr>
+        </table>
+    </div>
+
+    <div style="background: #FF6B35; color: white; padding: 12px; border-radius: 6px; margin-bottom: 25px;">
+        <h3 style="margin: 0; font-size: 16px;">📝 INSTRUÇÕES GERAIS</h3>
+        <p style="margin: 8px 0 0 0; font-size: 14px;">
+            • Leia atentamente cada questão antes de responder<br>
+            • Utilize caneta azul ou preta<br>
+            • Rascunhos devem ser feitos no verso da folha
+        </p>
+    </div>
+
+    <div id="conteudo-prova">
+        [CONTEÚDO_ADAPTADO_AQUI]
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; padding-top: 15px; border-top: 2px solid #e5e7eb; color: #6B7280; font-size: 12px;">
+        <p>Colégio Santo Antônio - Sistema NAP de Adaptação de Provas</p>
+    </div>
+</div>
+
+## INSTRUÇÕES FINAIS:
+1. ADAPTE o conteúdo aplicando as adaptações solicitadas
+2. MANTENHA o modelo visual da escola
+3. PRESERVE o conteúdo pedagógico original
+4. GERE HTML limpo e formatado
+5. INCLUA todas as questões adaptadas
+
+PROVA ADAPTADA (em HTML dentro do modelo):
+`;
+            }
+
+            criarInstrucoesAdaptacao(adaptacoes) {
+                const instrucoes = {
+                    'dislexia': `• Fonte Arial 14pt com espaçamento 1.5
+• Texto justificado à esquerda
+• Instruções claras e diretas
+• Uso de marcadores visuais
+• Evitar blocos longos de texto`,
+
+                    'tea': `• Estrutura previsível e consistente
+• Linguagem literal e objetiva
+• Redução de estímulos visuais
+• Sequência lógica clara
+• Instruções passo a passo`,
+
+                    'tdah': `• Questões objetivas e concisas
+• Instruções destacadas
+• Espaçamento ampliado
+• Limitar opções de resposta
+• Checklist para revisão`,
+
+                    'discalculia': `• Problemas contextualizados
+• Uso de recursos visuais
+• Calculadora permitida
+• Exemplos resolvidos
+• Dicas de resolução`,
+
+                    'baixa-visao': `• Fonte ampliada (16pt+)
+• Alto contraste preto/branco
+• Espaçamento generoso
+• Imagens com descrição
+• Formato A4 landscape`
+                };
+
+                return adaptacoes.map(adapt => 
+                    `🔹 ${adapt.toUpperCase()}:\n${instrucoes[adapt] || 'Adaptações personalizadas aplicadas'}`
+                ).join('\n\n');
+            }
+        }
+
+        // ✅ PROCESSADOR DE ARQUIVOS
+        class FileProcessor {
+            async extrairTexto(arquivo) {
+                return new Promise((resolve, reject) => {
+                    const leitor = new FileReader();
+                    
+                    leitor.onload = async function(e) {
+                        try {
+                            if (arquivo.type === 'text/plain' || arquivo.name.endsWith('.txt')) {
+                                resolve(e.target.result);
+                            } 
+                            else if (arquivo.type === 'application/pdf' || arquivo.name.endsWith('.pdf')) {
+                                const texto = await this.processarPDF(e.target.result);
+                                resolve(texto);
+                            }
+                            else if (arquivo.name.endsWith('.docx')) {
+                                const texto = await this.processarDOCX(arquivo);
+                                resolve(texto);
+                            }
+                            else if (arquivo.name.endsWith('.doc')) {
+                                resolve(`[ARQUIVO .DOC: ${arquivo.name}] - Converta para .docx para melhor processamento`);
+                            }
+                            else {
+                                reject(new Error('Formato de arquivo não suportado'));
+                            }
+                        } catch (error) {
+                            reject(error);
+                        }
+                    }.bind(this);
+                    
+                    leitor.onerror = () => reject(new Error('Erro na leitura do arquivo'));
+                    
+                    if (arquivo.type === 'application/pdf' || arquivo.name.endsWith('.pdf')) {
+                        leitor.readAsArrayBuffer(arquivo);
+                    } else {
+                        leitor.readAsText(arquivo);
+                    }
+                });
+            }
+
+            async processarPDF(arrayBuffer) {
+                try {
+                    // Configurar PDF.js
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+                    
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    let textoCompleto = '';
+                    
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const pagina = await pdf.getPage(i);
+                        const conteudo = await pagina.getTextContent();
+                        const strings = conteudo.items.map(item => item.str);
+                        textoCompleto += strings.join(' ') + '\n\n';
+                    }
+                    
+                    return textoCompleto || '[Não foi possível extrair texto do PDF]';
+                } catch (error) {
+                    console.error('Erro processamento PDF:', error);
+                    return '[PDF carregado - processamento de texto limitado]';
+                }
+            }
+
+            async processarDOCX(arquivo) {
+                try {
+                    const arrayBuffer = await this.lerArquivoComoArrayBuffer(arquivo);
+                    const resultado = await mammoth.extractRawText({ arrayBuffer });
+                    return resultado.value || '[Não foi possível extrair texto do DOCX]';
+                } catch (error) {
+                    console.error('Erro processamento DOCX:', error);
+                    return '[DOCX carregado - processamento de texto limitado]';
+                }
+            }
+
+            lerArquivoComoArrayBuffer(arquivo) {
+                return new Promise((resolve, reject) => {
+                    const leitor = new FileReader();
+                    leitor.onload = () => resolve(leitor.result);
+                    leitor.onerror = reject;
+                    leitor.readAsArrayBuffer(arquivo);
+                });
+            }
+        }
+
+        // ✅ GERENCIADOR PRINCIPAL
         class AdaptacaoManager {
             constructor() {
+                this.deepSeekService = new DeepSeekService();
+                this.fileProcessor = new FileProcessor();
+                this.provaAdaptadaHTML = null;
                 this.init();
             }
 
             init() {
                 this.checkAuthentication();
+                this.carregarConfiguracoes();
                 this.setupMenuNavigation();
                 this.setupMobileMenu();
                 this.setupFileUpload();
                 this.setupOutrasNecessidades();
+                this.setupApiConfig();
                 this.setupAdaptationProcess();
+            }
+
+            carregarConfiguracoes() {
+                const apiKeySalva = localStorage.getItem('deepseekApiKey');
+                if (apiKeySalva) {
+                    document.getElementById('deepseekApiKey').value = apiKeySalva;
+                    this.deepSeekService.setApiKey(apiKeySalva);
+                }
             }
 
             checkAuthentication() {
@@ -1091,7 +1485,6 @@
 
             setupMenuNavigation() {
                 const menuItems = document.querySelectorAll('.menu-item');
-                
                 menuItems.forEach(item => {
                     item.addEventListener('click', () => {
                         const menuId = parseInt(item.getAttribute('data-menu'));
@@ -1110,25 +1503,16 @@
             }
 
             navigateToMenu(menuId) {
-                switch(menuId) {
-                    case 1:
-                        window.location.href = BASE_URL + '/dashboard.html';
-                        break;
-                    case 2:
-                        window.location.href = BASE_URL + '/agendamento.html';
-                        break;
-                    case 3:
-                        window.location.href = BASE_URL + '/suporte.html';
-                        break;
-                    case 4:
-                        window.location.href = BASE_URL + '/calendario.html';
-                        break;
-                    case 5:
-                        window.location.href = BASE_URL + '/busca.html';
-                        break;
-                    case 6:
-                        // Já estamos na página de adaptação
-                        break;
+                const paginas = {
+                    1: '/dashboard.html',
+                    2: '/agendamento.html',
+                    3: '/suporte.html',
+                    4: '/calendario.html',
+                    5: '/busca.html'
+                };
+                
+                if (paginas[menuId]) {
+                    window.location.href = BASE_URL + paginas[menuId];
                 }
             }
 
@@ -1138,19 +1522,11 @@
                 const selectFileBtn = document.getElementById('selectFileBtn');
                 const fileName = document.getElementById('fileName');
 
-                // Abrir seletor de arquivo ao clicar no botão
-                selectFileBtn.addEventListener('click', () => {
-                    fileInput.click();
-                });
-
-                // Abrir seletor de arquivo ao clicar na área de upload
+                selectFileBtn.addEventListener('click', () => fileInput.click());
                 fileUploadArea.addEventListener('click', (e) => {
-                    if (e.target !== selectFileBtn) {
-                        fileInput.click();
-                    }
+                    if (e.target !== selectFileBtn) fileInput.click();
                 });
 
-                // Atualizar nome do arquivo selecionado
                 fileInput.addEventListener('change', () => {
                     if (fileInput.files.length > 0) {
                         const file = fileInput.files[0];
@@ -1167,48 +1543,37 @@
                 });
 
                 // Drag and drop
-                fileUploadArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    fileUploadArea.classList.add('dragover');
-                });
-
-                fileUploadArea.addEventListener('dragleave', () => {
-                    fileUploadArea.classList.remove('dragover');
-                });
-
-                fileUploadArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    fileUploadArea.classList.remove('dragover');
-                    
-                    if (e.dataTransfer.files.length > 0) {
-                        fileInput.files = e.dataTransfer.files;
-                        const file = fileInput.files[0];
-                        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
-                        fileName.innerHTML = `
-                            <span>📄 ${file.name}</span>
-                            <span class="file-size">(${fileSize} MB)</span>
-                            <span class="file-remove" onclick="adaptacaoManager.removerArquivo()">🗑️</span>
-                        `;
-                        this.validarArquivo(file);
-                    }
+                ['dragover', 'dragleave', 'drop'].forEach(evento => {
+                    fileUploadArea.addEventListener(evento, (e) => {
+                        e.preventDefault();
+                        if (evento === 'dragover') fileUploadArea.classList.add('dragover');
+                        else if (evento === 'dragleave') fileUploadArea.classList.remove('dragover');
+                        else if (evento === 'drop') {
+                            fileUploadArea.classList.remove('dragover');
+                            if (e.dataTransfer.files.length > 0) {
+                                fileInput.files = e.dataTransfer.files;
+                                fileInput.dispatchEvent(new Event('change'));
+                            }
+                        }
+                    });
                 });
             }
 
             validarArquivo(file) {
                 const errorElement = document.getElementById('arquivo-error');
                 const formatosPermitidos = ['.pdf', '.doc', '.docx', '.txt'];
-                const maxSize = 10 * 1024 * 1024; // 10MB
+                const maxSize = 10 * 1024 * 1024;
 
                 const extensao = '.' + file.name.split('.').pop().toLowerCase();
                 
                 if (!formatosPermitidos.includes(extensao)) {
-                    errorElement.textContent = 'Formato de arquivo não suportado. Use PDF, DOC, DOCX ou TXT.';
+                    errorElement.textContent = 'Formato não suportado. Use PDF, DOC, DOCX ou TXT.';
                     errorElement.style.display = 'block';
                     return false;
                 }
 
                 if (file.size > maxSize) {
-                    errorElement.textContent = 'Arquivo muito grande. O tamanho máximo é 10MB.';
+                    errorElement.textContent = 'Arquivo muito grande. Máximo 10MB.';
                     errorElement.style.display = 'block';
                     return false;
                 }
@@ -1228,11 +1593,46 @@
                 const outrasContainer = document.getElementById('outrasNeedsContainer');
 
                 outrasCheckbox.addEventListener('change', () => {
-                    if (outrasCheckbox.checked) {
-                        outrasContainer.style.display = 'block';
-                    } else {
-                        outrasContainer.style.display = 'none';
+                    outrasContainer.style.display = outrasCheckbox.checked ? 'block' : 'none';
+                    if (!outrasCheckbox.checked) {
                         document.getElementById('outrasNeeds').value = '';
+                    }
+                });
+            }
+
+            setupApiConfig() {
+                const toggleBtn = document.getElementById('apiConfigToggle');
+                const configContent = document.getElementById('apiConfigContent');
+                const testBtn = document.getElementById('testApiKeyBtn');
+                const apiKeyInput = document.getElementById('deepseekApiKey');
+
+                toggleBtn.addEventListener('click', () => {
+                    configContent.classList.toggle('show');
+                });
+
+                apiKeyInput.addEventListener('input', (e) => {
+                    this.deepSeekService.setApiKey(e.target.value.trim());
+                });
+
+                testBtn.addEventListener('click', async () => {
+                    const apiKey = apiKeyInput.value.trim();
+                    if (!apiKey) {
+                        this.mostrarErro('api-key-error', 'Informe uma API Key');
+                        return;
+                    }
+
+                    testBtn.disabled = true;
+                    testBtn.innerHTML = '<span>⏳</span> Testando...';
+
+                    try {
+                        await this.deepSeekService.testConnection();
+                        this.mostrarSucesso('Conexão com DeepSeek estabelecida com sucesso!');
+                        document.getElementById('api-key-error').style.display = 'none';
+                    } catch (error) {
+                        this.mostrarErro('api-key-error', error.message);
+                    } finally {
+                        testBtn.disabled = false;
+                        testBtn.innerHTML = '<span>🔍</span> Testar API Key';
                     }
                 });
             }
@@ -1248,32 +1648,29 @@
             validarFormulario() {
                 let valido = true;
 
-                // Validar disciplina
-                const disciplina = document.getElementById('provaDisciplina').value.trim();
-                if (!disciplina) {
-                    document.getElementById('disciplina-error').style.display = 'block';
-                    document.getElementById('provaDisciplina').classList.add('error');
-                    valido = false;
-                } else {
-                    document.getElementById('disciplina-error').style.display = 'none';
-                    document.getElementById('provaDisciplina').classList.remove('error');
-                }
+                // Validar campos básicos
+                const campos = [
+                    { id: 'provaDisciplina', errorId: 'disciplina-error' },
+                    { id: 'provaAno', errorId: 'ano-error' }
+                ];
 
-                // Validar ano/série
-                const ano = document.getElementById('provaAno').value;
-                if (!ano) {
-                    document.getElementById('ano-error').style.display = 'block';
-                    document.getElementById('provaAno').classList.add('error');
-                    valido = false;
-                } else {
-                    document.getElementById('ano-error').style.display = 'none';
-                    document.getElementById('provaAno').classList.remove('error');
-                }
+                campos.forEach(({ id, errorId }) => {
+                    const elemento = document.getElementById(id);
+                    const valor = elemento.value.trim();
+                    if (!valor) {
+                        this.mostrarErro(errorId, `Por favor, preencha ${id === 'provaDisciplina' ? 'a disciplina' : 'o ano/série'}`);
+                        elemento.classList.add('error');
+                        valido = false;
+                    } else {
+                        this.ocultarErro(errorId);
+                        elemento.classList.remove('error');
+                    }
+                });
 
                 // Validar arquivo
                 const arquivo = document.getElementById('fileInput').files[0];
                 if (!arquivo) {
-                    document.getElementById('arquivo-error').style.display = 'block';
+                    this.mostrarErro('arquivo-error', 'Por favor, selecione um arquivo de prova');
                     valido = false;
                 } else if (!this.validarArquivo(arquivo)) {
                     valido = false;
@@ -1282,24 +1679,33 @@
                 // Validar adaptações
                 const adaptacoes = this.obterAdaptacoesSelecionadas();
                 if (adaptacoes.length === 0) {
-                    document.getElementById('adaptacoes-error').style.display = 'block';
+                    this.mostrarErro('adaptacoes-error', 'Selecione pelo menos uma adaptação');
                     valido = false;
                 } else {
-                    document.getElementById('adaptacoes-error').style.display = 'none';
+                    this.ocultarErro('adaptacoes-error');
                 }
 
-                // Validar "outras necessidades" se selecionado
-                if (document.getElementById('adaptOutros').checked) {
-                    const outrasNeeds = document.getElementById('outrasNeeds').value.trim();
-                    if (!outrasNeeds) {
-                        document.getElementById('outras-needs-error').style.display = 'block';
-                        valido = false;
-                    } else {
-                        document.getElementById('outras-needs-error').style.display = 'none';
-                    }
+                // Validar API Key
+                if (!this.deepSeekService.apiKey) {
+                    this.mostrarErro('api-key-error', 'Configure sua API Key do DeepSeek');
+                    valido = false;
                 }
 
                 return valido;
+            }
+
+            mostrarErro(elementoId, mensagem) {
+                const elemento = document.getElementById(elementoId);
+                elemento.textContent = mensagem;
+                elemento.style.display = 'block';
+            }
+
+            ocultarErro(elementoId) {
+                document.getElementById(elementoId).style.display = 'none';
+            }
+
+            mostrarSucesso(mensagem) {
+                alert('✅ ' + mensagem);
             }
 
             setupAdaptationProcess() {
@@ -1311,174 +1717,185 @@
                 const downloadBtn = document.getElementById('downloadBtn');
                 const btnNovaAdaptacao = document.getElementById('btn-nova-adaptacao');
 
-                adaptarBtn.addEventListener('click', () => {
+                adaptarBtn.addEventListener('click', async () => {
                     if (!this.validarFormulario()) {
-                        // Scroll para o primeiro erro
                         const primeiroErro = document.querySelector('.error-message[style*="display: block"]');
-                        if (primeiroErro) {
-                            primeiroErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
+                        if (primeiroErro) primeiroErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         return;
                     }
 
-                    // Desabilitar botão durante o processamento
-                    adaptarBtn.disabled = true;
-                    adaptarBtn.innerHTML = '<span>⏳</span> Processando...';
-
-                    // Mostrar progresso
-                    progressContainer.style.display = 'block';
-                    resultadoContainer.style.display = 'none';
-
-                    // Simular processamento com etapas
-                    const etapas = [
-                        { texto: 'Analisando a prova original...', progresso: 25 },
-                        { texto: 'Aplicando adaptações para Dislexia...', progresso: 40 },
-                        { texto: 'Adaptando para TDAH...', progresso: 60 },
-                        { texto: 'Otimizando layout e acessibilidade...', progresso: 80 },
-                        { texto: 'Revisando e finalizando...', progresso: 95 },
-                        { texto: 'Adaptação concluída!', progresso: 100 }
-                    ];
-
-                    let etapaAtual = 0;
-                    const interval = setInterval(() => {
-                        if (etapaAtual < etapas.length) {
-                            const etapa = etapas[etapaAtual];
-                            progressBar.style.width = `${etapa.progresso}%`;
-                            progressText.textContent = etapa.texto;
-                            
-                            // Atualizar steps
-                            document.querySelectorAll('.progress-step').forEach((step, index) => {
-                                if (index <= etapaAtual) {
-                                    step.classList.add('active');
-                                } else {
-                                    step.classList.remove('active');
-                                }
-                            });
-                            
-                            etapaAtual++;
-                        } else {
-                            clearInterval(interval);
-                            
-                            // Mostrar resultado
-                            setTimeout(() => {
-                                progressContainer.style.display = 'none';
-                                resultadoContainer.style.display = 'block';
-                                adaptarBtn.disabled = false;
-                                adaptarBtn.innerHTML = '<span>✨</span> Adaptar Prova Agora';
-                                
-                                this.mostrarResultado();
-                                
-                                // Scroll para o resultado
-                                resultadoContainer.scrollIntoView({ behavior: 'smooth' });
-                            }, 1000);
-                        }
-                    }, 800);
+                    await this.processarAdaptacaoReal();
                 });
 
-                // Nova adaptação
                 btnNovaAdaptacao.addEventListener('click', () => {
                     this.limparFormulario();
                     resultadoContainer.style.display = 'none';
                     document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
                 });
 
-                // Download
                 downloadBtn.addEventListener('click', () => {
-                    this.simularDownload();
+                    this.downloadProvaAdaptada();
                 });
             }
 
-            mostrarResultado() {
+            async processarAdaptacaoReal() {
+                const adaptarBtn = document.getElementById('adaptarBtn');
+                const progressContainer = document.getElementById('progressContainer');
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                const resultadoContainer = document.getElementById('resultadoContainer');
+
+                // Configurar interface para processamento
+                adaptarBtn.disabled = true;
+                adaptarBtn.innerHTML = '<span>⏳</span> Processando com IA...';
+                progressContainer.style.display = 'block';
+                resultadoContainer.style.display = 'none';
+
+                try {
+                    // Obter dados do formulário
+                    const arquivo = document.getElementById('fileInput').files[0];
+                    const adaptacoes = this.obterAdaptacoesSelecionadas();
+                    const instrucoes = document.getElementById('instrucoes').value;
+                    
+                    const dadosProva = {
+                        disciplina: document.getElementById('provaDisciplina').value,
+                        ano: document.getElementById('provaAno').value,
+                        titulo: document.getElementById('provaTitulo').value || 'Avaliação Adaptada'
+                    };
+
+                    // Processamento em etapas
+                    await this.executarEtapa('Extraindo texto da prova...', 20);
+                    const textoProva = await this.fileProcessor.extrairTexto(arquivo);
+                    
+                    await this.executarEtapa('Enviando para IA DeepSeek...', 40);
+                    const provaAdaptadaHTML = await this.deepSeekService.adaptarProva(
+                        textoProva, adaptacoes, instrucoes, dadosProva
+                    );
+                    
+                    await this.executarEtapa('Processando adaptações...', 80);
+                    this.provaAdaptadaHTML = provaAdaptadaHTML;
+                    
+                    await this.executarEtapa('Finalizando...', 100);
+
+                    // Mostrar resultado
+                    progressContainer.style.display = 'none';
+                    resultadoContainer.style.display = 'block';
+                    adaptarBtn.disabled = false;
+                    adaptarBtn.innerHTML = '<span>✨</span> Adaptar Prova com IA';
+                    
+                    this.mostrarResultado(provaAdaptadaHTML);
+                    resultadoContainer.scrollIntoView({ behavior: 'smooth' });
+
+                } catch (error) {
+                    console.error('Erro no processamento:', error);
+                    this.mostrarErroProcessamento(error.message);
+                } finally {
+                    adaptarBtn.disabled = false;
+                    adaptarBtn.innerHTML = '<span>✨</span> Adaptar Prova com IA';
+                }
+            }
+
+            async executarEtapa(mensagem, progresso) {
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                
+                progressText.textContent = mensagem;
+                progressBar.style.width = `${progresso}%`;
+                
+                // Atualizar steps visuais
+                document.querySelectorAll('.progress-step').forEach((step, index) => {
+                    const stepProgress = [25, 50, 75, 100][index] || 100;
+                    step.classList.toggle('active', progresso >= stepProgress);
+                });
+                
+                // Pequena pausa para animação
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
+
+            mostrarErroProcessamento(mensagem) {
+                const progressContainer = document.getElementById('progressContainer');
+                progressContainer.style.display = 'none';
+                
+                alert('❌ Erro no processamento: ' + mensagem);
+            }
+
+            mostrarResultado(provaAdaptadaHTML) {
                 // Preencher resumo
-                document.getElementById('resumo-disciplina').textContent = document.getElementById('provaDisciplina').value;
-                document.getElementById('resumo-ano').textContent = document.getElementById('provaAno').value;
-                document.getElementById('resumo-data').textContent = new Date().toLocaleDateString('pt-BR');
+                document.getElementById('resumo-disciplina').textContent = 
+                    document.getElementById('provaDisciplina').value;
+                document.getElementById('resumo-ano').textContent = 
+                    document.getElementById('provaAno').value;
+                document.getElementById('resumo-data').textContent = 
+                    new Date().toLocaleDateString('pt-BR');
                 
                 // Listar adaptações
                 const adaptacoes = this.obterAdaptacoesSelecionadas();
-                const adaptacoesText = adaptacoes.map(adapt => {
-                    const labels = {
-                        'dislexia': 'Dislexia',
-                        'tea': 'TEA (Transtorno do Espectro Autista)',
-                        'tdah': 'TDAH (Transtorno de Déficit de Atenção)',
-                        'discalculia': 'Discalculia',
-                        'baixa-visao': 'Baixa Visão',
-                        'outros': `Outras Necessidades: ${document.getElementById('outrasNeeds').value}`
-                    };
-                    return labels[adapt] || adapt;
-                }).join(', ');
-                
-                document.getElementById('resumo-adaptacoes').textContent = adaptacoesText;
-
-                // Gerar preview
-                const previewContent = document.getElementById('preview-content');
-                previewContent.innerHTML = this.gerarPreviewAdaptacoes(adaptacoes);
-            }
-
-            gerarPreviewAdaptacoes(adaptacoes) {
-                let html = '<div class="preview-adaptations">';
-                
-                adaptacoes.forEach(adapt => {
-                    const details = {
-                        'dislexia': '• Fonte Arial 14pt com espaçamento 1.5<br>• Instruções claras e diretas<br>• Texto justificado à esquerda',
-                        'tea': '• Estrutura previsível e consistente<br>• Linguagem literal e objetiva<br>• Redução de estímulos visuais',
-                        'tdah': '• Questões objetivas e concisas<br>• Instruções passo a passo<br>• Espaço para respostas ampliado',
-                        'discalculia': '• Problemas contextualizados<br>• Uso de recursos visuais<br>• Calculadora permitida',
-                        'baixa-visao': '• Fonte ampliada (16pt)<br>• Alto contraste preto/branco<br>• Imagens com descrição textual',
-                        'outros': `• ${document.getElementById('outrasNeeds').value}`
-                    };
-                    
-                    if (details[adapt]) {
-                        html += `
-                            <div class="preview-item">
-                                <strong>${this.getAdaptacaoNome(adapt)}:</strong>
-                                <div class="preview-details">${details[adapt]}</div>
-                            </div>
-                        `;
-                    }
-                });
-                
-                html += '</div>';
-                return html;
-            }
-
-            getAdaptacaoNome(codigo) {
-                const nomes = {
-                    'dislexia': 'Adaptações para Dislexia',
-                    'tea': 'Adaptações para TEA',
-                    'tdah': 'Adaptações para TDAH',
-                    'discalculia': 'Adaptações para Discalculia',
-                    'baixa-visao': 'Adaptações para Baixa Visão',
-                    'outros': 'Outras Adaptações Específicas'
+                const nomesAdaptacoes = {
+                    'dislexia': 'Dislexia',
+                    'tea': 'TEA',
+                    'tdah': 'TDAH',
+                    'discalculia': 'Discalculia',
+                    'baixa-visao': 'Baixa Visão',
+                    'outros': `Outras: ${document.getElementById('outrasNeeds').value}`
                 };
-                return nomes[codigo] || codigo;
+                
+                document.getElementById('resumo-adaptacoes').textContent = 
+                    adaptacoes.map(adapt => nomesAdaptacoes[adapt]).join(', ');
+
+                // Mostrar preview
+                const previewContent = document.getElementById('preview-content');
+                previewContent.innerHTML = provaAdaptadaHTML || 
+                    '<p style="color: #6B7280; text-align: center;">Prévia da prova adaptada aparecerá aqui</p>';
             }
 
-            simularDownload() {
-                // Feedback visual
+            downloadProvaAdaptada() {
+                if (!this.provaAdaptadaHTML) {
+                    alert('❌ Nenhuma prova adaptada para download');
+                    return;
+                }
+
                 const btn = document.getElementById('downloadBtn');
                 const originalText = btn.innerHTML;
-                btn.innerHTML = '<span>⏳</span> Baixando...';
-                btn.disabled = true;
                 
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳</span> Gerando...';
+
+                try {
+                    // Criar blob com a prova adaptada
+                    const blob = new Blob([this.provaAdaptadaHTML], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
                     
-                    // Simular download
-                    alert('✅ Download da prova adaptada iniciado!\n\nEm uma implementação real, o arquivo adaptado seria baixado automaticamente.');
-                }, 2000);
+                    // Criar link de download
+                    const link = document.createElement('a');
+                    const disciplina = document.getElementById('provaDisciplina').value;
+                    const nomeArquivo = `prova_adaptada_${disciplina.replace(/\s+/g, '_')}.html`;
+                    
+                    link.href = url;
+                    link.download = nomeArquivo;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    
+                    this.mostrarSucesso('Download da prova adaptada iniciado!');
+                    
+                } catch (error) {
+                    console.error('Erro no download:', error);
+                    alert('❌ Erro ao gerar download');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
             }
 
             limparFormulario() {
                 // Limpar campos
-                document.getElementById('provaDisciplina').value = '';
-                document.getElementById('provaAno').value = '';
-                document.getElementById('provaTitulo').value = '';
-                document.getElementById('fileInput').value = '';
-                document.getElementById('fileName').textContent = '';
-                document.getElementById('outrasNeeds').value = '';
-                document.getElementById('instrucoes').value = '';
+                ['provaDisciplina', 'provaAno', 'provaTitulo', 'outrasNeeds', 'instrucoes'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+                
+                // Limpar arquivo
+                this.removerArquivo();
                 
                 // Limpar checkboxes
                 document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -1496,6 +1913,8 @@
                 document.querySelectorAll('.form-control.error').forEach(input => {
                     input.classList.remove('error');
                 });
+                
+                this.provaAdaptadaHTML = null;
             }
         }
 
