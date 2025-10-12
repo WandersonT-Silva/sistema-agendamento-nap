@@ -258,11 +258,6 @@
             margin-top: 5px;
         }
 
-        .quick-actions {
-            display: flex;
-            gap: 10px;
-        }
-
         /* ===== FORMULÁRIO DE ADAPTAÇÃO ===== */
         .form-container {
             background: var(--branco);
@@ -707,11 +702,6 @@
                 align-items: flex-start;
                 gap: 15px;
             }
-            
-            .quick-actions {
-                width: 100%;
-                justify-content: space-between;
-            }
         }
 
         /* ===== ANIMAÇÕES ===== */
@@ -843,14 +833,6 @@
                     <div>
                         <h1 class="page-title">Adaptação de Provas</h1>
                         <p class="page-subtitle">Adapte avaliações para alunos com necessidades especiais</p>
-                    </div>
-                    <div class="quick-actions">
-                        <button class="btn-escola btn-secondary" id="btn-limpar">
-                            <span>🗑️</span> Limpar
-                        </button>
-                        <button class="btn-escola" id="btn-salvar-rascunho">
-                            <span>💾</span> Salvar Rascunho
-                        </button>
                     </div>
                 </div>
 
@@ -1078,7 +1060,6 @@
         // ✅ GERENCIADOR PRINCIPAL DA ADAPTAÇÃO
         class AdaptacaoManager {
             constructor() {
-                this.rascunhoSalvo = false;
                 this.init();
             }
 
@@ -1089,8 +1070,6 @@
                 this.setupFileUpload();
                 this.setupOutrasNecessidades();
                 this.setupAdaptationProcess();
-                this.setupRascunho();
-                this.carregarRascunho();
             }
 
             checkAuthentication() {
@@ -1247,69 +1226,6 @@
                         document.getElementById('outrasNeeds').value = '';
                     }
                 });
-            }
-
-            setupRascunho() {
-                document.getElementById('btn-salvar-rascunho').addEventListener('click', () => {
-                    this.salvarRascunho();
-                });
-
-                document.getElementById('btn-limpar').addEventListener('click', () => {
-                    this.limparFormulario();
-                });
-            }
-
-            salvarRascunho() {
-                const rascunho = {
-                    disciplina: document.getElementById('provaDisciplina').value,
-                    ano: document.getElementById('provaAno').value,
-                    titulo: document.getElementById('provaTitulo').value,
-                    adaptacoes: this.obterAdaptacoesSelecionadas(),
-                    outrasNeeds: document.getElementById('outrasNeeds').value,
-                    instrucoes: document.getElementById('instrucoes').value,
-                    timestamp: new Date().toISOString()
-                };
-
-                localStorage.setItem('rascunho_adaptacao', JSON.stringify(rascunho));
-                this.rascunhoSalvo = true;
-                
-                // Feedback visual
-                const btn = document.getElementById('btn-salvar-rascunho');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<span>✅</span> Salvo!';
-                btn.disabled = true;
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }, 2000);
-            }
-
-            carregarRascunho() {
-                const rascunho = localStorage.getItem('rascunho_adaptacao');
-                if (rascunho) {
-                    const dados = JSON.parse(rascunho);
-                    
-                    document.getElementById('provaDisciplina').value = dados.disciplina || '';
-                    document.getElementById('provaAno').value = dados.ano || '';
-                    document.getElementById('provaTitulo').value = dados.titulo || '';
-                    document.getElementById('outrasNeeds').value = dados.outrasNeeds || '';
-                    document.getElementById('instrucoes').value = dados.instrucoes || '';
-                    
-                    // Restaurar checkboxes
-                    if (dados.adaptacoes) {
-                        dados.adaptacoes.forEach(adaptacao => {
-                            const checkbox = document.getElementById(`adapt${adaptacao}`);
-                            if (checkbox) checkbox.checked = true;
-                        });
-                    }
-                    
-                    if (dados.adaptacoes && dados.adaptacoes.includes('Outros')) {
-                        document.getElementById('outrasNeedsContainer').style.display = 'block';
-                    }
-                    
-                    this.rascunhoSalvo = true;
-                }
             }
 
             obterAdaptacoesSelecionadas() {
@@ -1571,10 +1487,6 @@
                 document.querySelectorAll('.form-control.error').forEach(input => {
                     input.classList.remove('error');
                 });
-                
-                // Remover rascunho
-                localStorage.removeItem('rascunho_adaptacao');
-                this.rascunhoSalvo = false;
             }
         }
 
